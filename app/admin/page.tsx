@@ -1,29 +1,28 @@
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const fetchCache = 'force-no-store'
+
 'use client'
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
 
-type Order = {
-  id: number
-  name: string
-  phone: string
-  address: string
-  created_at: string
-}
+type Order = { id:number; name:string; phone:string; address:string; created_at:string }
 
 export default function AdminPage() {
   const [orders, setOrders] = useState<Order[] | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [q, setQ] = useState('') // 검색어
+  const [q, setQ] = useState('')
 
   async function load() {
-    setError(null)
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(200)
-    if (error) setError(error.message)
-    else setOrders(data as Order[])
+    try {
+      setError(null)
+      const res = await fetch('/api/orders', { cache: 'no-store' })
+      if (!res.ok) throw new Error(await res.text())
+      const data = await res.json()
+      setOrders(data as Order[])
+    } catch (e:any) {
+      console.error(e)
+      setError('데이터 로드 실패')
+    }
   }
 
   useEffect(() => { load() }, [])
@@ -40,18 +39,11 @@ export default function AdminPage() {
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-4">
       <h1 className="text-2xl font-semibold">주문 리스트</h1>
-
       <div className="flex gap-2 items-center">
-        <input
-          className="border p-2 rounded w-64"
-          placeholder="이름/전화 검색"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-        />
+        <input className="border p-2 rounded w-64" placeholder="이름/전화 검색" value={q} onChange={(e)=>setQ(e.target.value)} />
         <button onClick={load} className="border px-3 py-2 rounded">새로고침</button>
         <span className="text-sm text-gray-500">총 {filtered.length}건</span>
       </div>
-
       {filtered.length === 0 ? (
         <div className="text-gray-600">표시할 주문이 없습니다.</div>
       ) : (
