@@ -56,23 +56,7 @@ export default function Hero({ onPrimaryClick, onSecondaryClick }: HeroProps) {
 
   return (
     <>
-      {/* Hero Image - First in DOM */}
-      <section className="w-full flex justify-center py-8">
-        <picture>
-          <source srcSet="/assets/IMG_7402.webp" type="image/webp" />
-          <Image
-            src="/assets/IMG_7402.jpeg"
-            alt="Carry Bedding Hero"
-            width={768}
-            height={1159}
-            className="mx-auto h-auto w-full max-w-[520px]"
-            sizes="(max-width: 640px) 100vw, 520px"
-            priority
-          />
-        </picture>
-      </section>
-
-      {/* Text and Buttons Section - Second in DOM */}
+      {/* Text Section - First in DOM */}
       <section className="relative bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-screen flex items-center px-4 overflow-hidden">
         <div className="max-w-6xl mx-auto w-full relative z-10">
           <motion.div
@@ -92,38 +76,6 @@ export default function Hero({ onPrimaryClick, onSecondaryClick }: HeroProps) {
               캐리 세탁 서비스
             </motion.h1>
 
-            {/* CTA Buttons */}
-            <motion.div
-              variants={itemVariants}
-              className="flex flex-col sm:flex-row gap-4 justify-center items-center"
-            >
-              {/* 전화문의 버튼 */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={onSecondaryClick}
-                className="w-full sm:w-auto px-8 py-4 border-2 border-blue-600 text-blue-600 font-semibold rounded-xl hover:bg-blue-50 transition-all duration-300 flex items-center justify-center gap-2"
-                style={{ fontFamily: 'Pretendard, sans-serif' }}
-              >
-                <Phone className="w-5 h-5" />
-                전화문의
-              </motion.button>
-
-              {/* 구매하기 버튼 */}
-              <motion.button
-                whileHover={{ 
-                  scale: 1.05,
-                  boxShadow: "0 20px 40px rgba(59, 130, 246, 0.3)"
-                }}
-                whileTap={{ scale: 0.95 }}
-                onClick={onPrimaryClick}
-                className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg"
-                style={{ fontFamily: 'Pretendard, sans-serif' }}
-              >
-                <ShoppingCart className="w-5 h-5" />
-                구매하기
-              </motion.button>
-            </motion.div>
           </motion.div>
         </div>
 
@@ -168,6 +120,22 @@ export default function Hero({ onPrimaryClick, onSecondaryClick }: HeroProps) {
             className="absolute bottom-32 left-16 w-5 h-5 bg-indigo-200 rounded-full opacity-40"
           />
         </div>
+      </section>
+
+      {/* Hero Image - Second in DOM */}
+      <section className="w-full flex justify-center py-8">
+        <picture>
+          <source srcSet="/assets/IMG_7402.webp" type="image/webp" />
+          <Image
+            src="/assets/IMG_7402.jpeg"
+            alt="Carry Bedding Hero"
+            width={768}
+            height={1159}
+            className="mx-auto h-auto w-full max-w-[520px]"
+            sizes="(max-width: 640px) 100vw, 520px"
+            priority
+          />
+        </picture>
       </section>
     </>
   )
