@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { getSupabaseBrowser } from '@/lib/supabase-browser'
 import DaumPostcode from 'react-daum-postcode'
 
 export default function OrderPage() {
@@ -74,6 +74,7 @@ export default function OrderPage() {
     setIsSubmitting(true)
 
     try {
+      const supabase = getSupabaseBrowser()
       const { error } = await supabase
         .from('orders')
         .insert([
