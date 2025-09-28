@@ -241,6 +241,22 @@ export default function Hero({ onPrimaryClick, onSecondaryClick }: HeroProps) {
           />
         </div>
       </section>
+
+      {/* IMG_7402 Image - Third in DOM */}
+      <section className="w-full flex justify-center py-8">
+        <picture>
+          <source srcSet="/assets/IMG_7402.webp" type="image/webp" />
+          <Image
+            src="/assets/IMG_7402.jpeg"
+            alt="Carry Bedding Hero"
+            width={768}
+            height={1159}
+            className="mx-auto h-auto w-full max-w-[520px]"
+            sizes="(max-width: 640px) 100vw, 520px"
+            priority
+          />
+        </picture>
+      </section>
     </>
   )
 }
