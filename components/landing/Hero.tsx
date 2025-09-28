@@ -56,7 +56,19 @@ export default function Hero({ onPrimaryClick, onSecondaryClick }: HeroProps) {
 
   return (
     <>
-      {/* Text Section - First in DOM */}
+      {/* Hero Logo Image - First in DOM */}
+      <section className="w-full flex justify-center py-8">
+        <Image
+          src="/assets/hero.png"
+          alt="Carry hero logo"
+          width={800}
+          height={400}
+          className="mx-auto h-auto w-full max-w-[600px]"
+          priority
+        />
+      </section>
+
+      {/* Text Section - Second in DOM */}
       <section className="relative bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-screen flex items-center px-4 overflow-hidden">
         <div className="max-w-6xl mx-auto w-full relative z-10">
           <motion.div
@@ -227,22 +239,6 @@ export default function Hero({ onPrimaryClick, onSecondaryClick }: HeroProps) {
             className="absolute bottom-80 left-8 w-3 h-3 bg-blue-400 rounded-full opacity-50"
           />
         </div>
-      </section>
-
-      {/* Hero Image - Second in DOM */}
-      <section className="w-full flex justify-center py-8">
-        <picture>
-          <source srcSet="/assets/IMG_7402.webp" type="image/webp" />
-          <Image
-            src="/assets/IMG_7402.jpeg"
-            alt="Carry Bedding Hero"
-            width={768}
-            height={1159}
-            className="mx-auto h-auto w-full max-w-[520px]"
-            sizes="(max-width: 640px) 100vw, 520px"
-            priority
-          />
-        </picture>
       </section>
     </>
   )
