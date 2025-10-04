@@ -1,40 +1,26 @@
-'use client'
-
-import { useRef } from 'react'
-import Header from '@/components/Header'
-import Hero from '@/components/landing/Hero'
-import FeatureCards from '@/components/landing/FeatureCards'
-import Comparison from '@/components/landing/Comparison'
-import Timeline from '@/components/landing/Timeline'
-import Testimonials from '@/components/landing/Testimonials'
-import Notice from '@/components/landing/Notice'
 import OrderForm from '@/components/landing/OrderForm'
-import StickyBar from '@/components/landing/StickyBar'
+import PaymentErrorAlert from '@/components/order/PaymentErrorAlert'
+import { Suspense } from 'react'
 
-export default function OrderPage() {
-  const orderFormRef = useRef<HTMLDivElement>(null)
+interface OrderPageProps {
+  searchParams: Promise<{ error?: string; reason?: string; status?: string }>
+}
 
-  const scrollToOrder = () => {
-    const element = document.getElementById('order-form')
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' })
-    }
-  }
+export default async function OrderPage({ searchParams }: OrderPageProps) {
+  const params = await searchParams
+  const hasPaymentError = params.error === 'payment_failed'
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white" style={{ fontFamily: 'Pretendard, sans-serif' }}>
-      <div id="top" />
-      <Header />
-      <div className="space-y-6 md:space-y-8">
-        <Hero onPrimaryClick={scrollToOrder} />
-        <FeatureCards />
-        <Comparison />
-        <Timeline />
-        <Testimonials />
-        <Notice />
-        <OrderForm />
-        <StickyBar onPrimaryClick={scrollToOrder} />
-      </div>
-    </div>
+    <main className="mx-auto max-w-3xl px-4 py-8">
+      <PaymentErrorAlert />
+      {hasPaymentError && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-600 text-center">
+            결제에 실패했습니다. 다시 시도해주세요.
+          </p>
+        </div>
+      )}
+      <OrderForm />
+    </main>
   )
 }

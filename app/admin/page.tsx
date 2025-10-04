@@ -1,10 +1,27 @@
 'use client'
 import { useEffect, useState } from 'react'
 
-type Order = { id:number; name:string; phone:string; address:string; created_at:string }
+type Order = { 
+  id: number
+  user_id: string | null
+  name: string
+  phone: string
+  address: string
+  created_at: string
+  profiles?: {
+    name: string | null
+    email: string | null
+  } | null
+}
+
+type AdminStats = {
+  totalOrders: number
+  distinctUsers: number
+}
 
 export default function AdminPage() {
   const [orders, setOrders] = useState<Order[] | null>(null)
+  const [stats, setStats] = useState<AdminStats | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [q, setQ] = useState('')
 
@@ -15,6 +32,11 @@ export default function AdminPage() {
       if (!res.ok) throw new Error(await res.text())
       const data = await res.json()
       setOrders(data as Order[])
+      
+      // Calculate stats
+      const totalOrders = data.length
+      const distinctUsers = new Set(data.map((order: Order) => order.user_id).filter(Boolean)).size
+      setStats({ totalOrders, distinctUsers })
     } catch (e:any) {
       console.error(e)
       setError('데이터 로드 실패')
@@ -35,6 +57,21 @@ export default function AdminPage() {
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-4">
       <h1 className="text-2xl font-semibold">주문 리스트</h1>
+      
+      {/* Stats */}
+      {stats && (
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <h3 className="font-semibold text-blue-900">총 주문 수</h3>
+            <p className="text-2xl font-bold text-blue-600">{stats.totalOrders}</p>
+          </div>
+          <div className="bg-green-50 p-4 rounded-lg">
+            <h3 className="font-semibold text-green-900">가입 사용자 수</h3>
+            <p className="text-2xl font-bold text-green-600">{stats.distinctUsers}</p>
+          </div>
+        </div>
+      )}
+      
       <div className="flex gap-2 items-center">
         <input className="border p-2 rounded w-64" placeholder="이름/전화 검색" value={q} onChange={(e)=>setQ(e.target.value)} />
         <button onClick={load} className="border px-3 py-2 rounded">새로고침</button>
@@ -47,6 +84,7 @@ export default function AdminPage() {
           <thead className="bg-gray-50">
             <tr>
               <th className="p-2 border-b">시간</th>
+              <th className="p-2 border-b">사용자</th>
               <th className="p-2 border-b">이름</th>
               <th className="p-2 border-b">전화</th>
               <th className="p-2 border-b">주소</th>
@@ -56,6 +94,13 @@ export default function AdminPage() {
             {filtered.map(o => (
               <tr key={o.id} className="border-b">
                 <td className="p-2">{new Date(o.created_at).toLocaleString()}</td>
+                <td className="p-2">
+                  {o.user_id ? (
+                    <span className="text-green-600 font-medium">✓ 가입</span>
+                  ) : (
+                    <span className="text-gray-400">게스트</span>
+                  )}
+                </td>
                 <td className="p-2">{o.name}</td>
                 <td className="p-2">{o.phone}</td>
                 <td className="p-2">{o.address}</td>

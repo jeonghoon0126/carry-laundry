@@ -4,16 +4,21 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:3000": "next dev -p 3000",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test:geocoder": "node scripts/test-geocoder.js",
+    "test:geocoder:run": "node scripts/run-geocoder-tests.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@next/font": "^14.2.15",
     "@supabase/supabase-js": "^2.58.0",
+    "@tosspayments/payment-sdk": "^1.9.1",
     "framer-motion": "^12.23.22",
     "lucide-react": "^0.544.0",
     "next": "15.5.4",
+    "next-auth": "^4.24.11",
     "react": "19.1.0",
     "react-daum-postcode": "^3.2.0",
     "react-dom": "19.1.0",

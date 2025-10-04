@@ -1,0 +1,23 @@
+{
+  "terminal.integrated.defaultProfile.osx": "zsh",
+  "terminal.integrated.shell.osx": "/bin/zsh",
+  "terminal.integrated.automationShell.osx": "/bin/zsh",
+  "terminal.integrated.profiles.osx": {
+    "zsh": {
+      "path": "/bin/zsh",
+      "args": ["-l"]
+    }
+  },
+  "terminal.integrated.commandsToSkipShell": [
+    "npm run dev",
+    "npm start",
+    "yarn dev",
+    "yarn start"
+  ],
+  "terminal.integrated.allowChords": false,
+  "terminal.integrated.allowMnemonics": false,
+  "terminal.integrated.enableMultiLinePasteWarning": false,
+  "terminal.integrated.shellIntegration.enabled": false,
+  "terminal.integrated.shellIntegration.decorationsEnabled": false
+}
+

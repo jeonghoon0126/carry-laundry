@@ -6,3 +6,8 @@ export function getSupabaseBrowser() {
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   return createClient(url, anon)
 }
+
+
+
+
+
