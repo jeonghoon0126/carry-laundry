@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, MapPin, Clock, MessageSquare, CreditCard } from 'lucide-react'
+import { ArrowLeft, MapPin, Clock, MessageSquare, CreditCard, Search } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import CheckoutSkeleton from './CheckoutSkeleton'
@@ -52,29 +52,75 @@ interface CheckoutSheetProps {
   isLoading?: boolean
 }
 
+// Daum Postcode types
+declare global {
+  interface Window {
+    daum: any
+  }
+}
+
 export default function CheckoutSheet({ isLoading = false }: CheckoutSheetProps) {
   const router = useRouter()
   const [pickupTime, setPickupTime] = useState<string>('')
   const [deliveryTime, setDeliveryTime] = useState<string>('')
   const [paymentMethod, setPaymentMethod] = useState<string>('toss')
   const [specialRequests, setSpecialRequests] = useState<string>('')
+  const [address, setAddress] = useState<string>('')
 
-  // Mock address data - in real app this would come from props/context
-  const address = {
-    main: '서울 관악구 과천대로 863',
-    detail: '남현동, 1층',
-    full: '서울 관악구 과천대로 863 (남현동)'
+  // Daum Postcode function
+  const openDaumPostcode = () => {
+    if (typeof window !== 'undefined' && window.daum) {
+      new window.daum.Postcode({
+        oncomplete: function(data: any) {
+          // 주소 정보를 조합하여 표시할 주소
+          let fullAddr = ''
+          let extraAddr = ''
+
+          // 사용자가 선택한 주소 타입에 따라 해당 주소 값을 가져온다.
+          if (data.userSelectedType === 'R') {
+            // 사용자가 도로명 주소를 선택했을 경우
+            fullAddr = data.roadAddress
+          } else {
+            // 사용자가 지번 주소를 선택했을 경우
+            fullAddr = data.jibunAddress
+          }
+
+          // 사용자가 선택한 주소가 도로명 타입일때 조합한다.
+          if (data.userSelectedType === 'R') {
+            // 법정동명이 있을 경우 추가한다.
+            if (data.bname !== '' && /[동|로|가]$/g.test(data.bname)) {
+              extraAddr += data.bname
+            }
+            // 건물명이 있고, 공동주택일 경우 추가한다.
+            if (data.buildingName !== '' && data.apartment === 'Y') {
+              extraAddr += (extraAddr !== '' ? ', ' + data.buildingName : data.buildingName)
+            }
+            // 표시할 참고항목이 있을 경우, 괄호까지 추가한 최종 문자열을 만든다.
+            if (extraAddr !== '') {
+              extraAddr = ' (' + extraAddr + ')'
+            }
+            // 조합된 참고항목을 해당 필드에 넣는다.
+            fullAddr += extraAddr
+          }
+
+          // 우편번호와 주소 정보를 해당 필드에 넣는다.
+          setAddress(fullAddr)
+        }
+      }).open()
+    } else {
+      alert('주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.')
+    }
   }
 
   if (isLoading) {
     return <CheckoutSkeleton />
   }
 
-  const isFormValid = pickupTime && deliveryTime && paymentMethod
+  const isFormValid = pickupTime && deliveryTime && paymentMethod && address
 
   const handlePay = () => {
     const payload = {
-      address: address.full,
+      address: address,
       pickupTime,
       deliveryTime,
       paymentMethod,
@@ -102,24 +148,38 @@ export default function CheckoutSheet({ isLoading = false }: CheckoutSheetProps)
 
       {/* Address Card */}
       <div className="rounded-2xl bg-white shadow-sm p-4">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-3 flex-1">
-            <MapPin className="w-5 h-5 text-[#13C2C2] mt-0.5 flex-shrink-0" />
-            <div className="flex-1">
-              <div className="font-medium text-gray-900 mb-1">배송지</div>
-              <div className="text-sm text-gray-600 mb-1">{address.main}</div>
-              <div className="text-xs text-gray-500">{address.detail}</div>
-            </div>
+        <div className="flex items-center gap-2 mb-3">
+          <MapPin className="w-5 h-5 text-[#13C2C2]" />
+          <h3 className="font-medium text-gray-900">배송지</h3>
+        </div>
+        
+        <div className="space-y-3">
+          {/* Address Input with Search Button */}
+          <div className="flex gap-2">
+            <input
+              id="addressInput"
+              type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="주소를 입력하거나 검색해주세요"
+              className="flex-1 p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#13C2C2] focus:border-transparent"
+            />
+            <button
+              onClick={openDaumPostcode}
+              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2 font-medium"
+            >
+              <Search className="w-4 h-4" />
+              주소 검색
+            </button>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            as="a"
-            href="/home"
-            className="text-[#13C2C2] hover:text-[#0FA8A8]"
-          >
-            변경
-          </Button>
+          
+          {/* Address Display */}
+          {address && (
+            <div className="p-3 bg-gray-50 rounded-lg border">
+              <div className="text-sm text-gray-600 mb-1">선택된 주소</div>
+              <div className="text-sm font-medium text-gray-900">{address}</div>
+            </div>
+          )}
         </div>
       </div>
 

@@ -35,13 +35,13 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center px-4" style={{ fontFamily: 'Pretendard, sans-serif' }}>
+    <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           {/* Logo */}
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900">carry</h1>
-            <div className="w-12 h-1 bg-blue-600 mx-auto mt-2 rounded-full"></div>
+            <div className="w-12 h-1 bg-[#13C2C2] mx-auto mt-2 rounded-full"></div>
           </div>
           
           {/* Heading */}

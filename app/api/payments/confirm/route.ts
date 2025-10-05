@@ -1,13 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE!
-)
+// 빌드 시점 모듈 평가를 피하기 위해 핸들러 내부에서 Supabase 클라이언트를 생성하도록 변경.
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+
+function getSupabaseServerClient() {
+  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) {
+    throw new Error('Supabase env missing at runtime');
+  }
+  return createClient(url, key);
+}
 
 export async function GET(request: NextRequest) {
   try {
+    const supabase = getSupabaseServerClient(); // <-- 핸들러 내부에서 생성
+    
     // Log incoming request
     console.info('[Toss] confirm-in', {
       url: request.url

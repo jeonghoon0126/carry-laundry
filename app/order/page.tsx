@@ -1,7 +1,12 @@
-import OrderForm from '@/components/landing/OrderForm'
+import { Metadata } from 'next'
+import SimpleCheckoutSheet from '@/components/order/SimpleCheckoutSheet'
 import PaymentErrorAlert from '@/components/order/PaymentErrorAlert'
 import { Suspense } from 'react'
-import Link from 'next/link'
+
+export const metadata: Metadata = {
+  title: '세탁 주문 - carry',
+  description: '세탁 서비스를 주문하세요'
+}
 
 interface OrderPageProps {
   searchParams: Promise<{ error?: string; reason?: string; status?: string }>
@@ -12,26 +17,18 @@ export default async function OrderPage({ searchParams }: OrderPageProps) {
   const hasPaymentError = params.error === 'payment_failed'
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8">
-      {/* Temporary link to new design */}
-      <div className="mb-6 text-center">
-        <Link 
-          href="/order/new" 
-          className="text-sm text-[#13C2C2] hover:text-[#0FA8A8] underline"
-        >
-          새 디자인으로 보기
-        </Link>
+    <main className="min-h-screen bg-gray-50 py-4">
+      <div className="mx-auto max-w-[390px] px-4 md:px-0">
+        <PaymentErrorAlert />
+        {hasPaymentError && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-600 text-center">
+              결제에 실패했습니다. 다시 시도해주세요.
+            </p>
+          </div>
+        )}
+        <SimpleCheckoutSheet />
       </div>
-      
-      <PaymentErrorAlert />
-      {hasPaymentError && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-600 text-center">
-            결제에 실패했습니다. 다시 시도해주세요.
-          </p>
-        </div>
-      )}
-      <OrderForm />
     </main>
   )
 }

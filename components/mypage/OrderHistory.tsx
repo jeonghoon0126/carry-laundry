@@ -109,55 +109,55 @@ export default function OrderHistory() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold text-[var(--text)]">최근 주문</h2>
+      <h2 className="text-xl font-semibold text-gray-900">최근 주문</h2>
       
       {/* Mobile-first Orders List */}
       <div className="space-y-4">
         {/* Desktop Table View */}
-        <div className="hidden md:block bg-[var(--card)] rounded-[var(--radius)] shadow-[var(--shadow)] overflow-hidden">
+        <div className="hidden md:block bg-white rounded-2xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-[#1a2141]">
+              <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     주문일시
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     주문자
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     연락처
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     주소
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     주문번호
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     결제상태
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     결제금액
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-[var(--card)] divide-y divide-[#27314f]">
+              <tbody className="bg-white divide-y divide-gray-200">
                 {state.orders.map((order) => (
-                  <tr key={order.id} className="hover:ring-1 hover:ring-[var(--ring)] hover:-translate-y-[1px] transition">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text)]">
+                  <tr key={order.id} className="hover:ring-1 hover:ring-[#13C2C2]/20 hover:-translate-y-[1px] transition">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatOrderDate(order.created_at)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text)]">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {order.name}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--muted)]">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {maskPhone(order.phone)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-[var(--muted)]">
+                    <td className="px-6 py-4 text-sm text-gray-500">
                       {shortAddress(order.address)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-[var(--muted)]">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
                       #{order.id}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -166,7 +166,7 @@ export default function OrderHistory() {
                       </Badge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                      <span className={order.paid ? "text-[var(--text)] font-semibold" : "text-[var(--muted)]"}>
+                      <span className={order.paid ? "text-gray-900 font-semibold" : "text-gray-500"}>
                         {order.payment_amount ? order.payment_amount.toLocaleString("ko-KR") + "원" : "-"}
                       </span>
                     </td>
@@ -180,18 +180,18 @@ export default function OrderHistory() {
         {/* Mobile Card View */}
         <div className="md:hidden space-y-4">
           {state.orders.map((order) => (
-            <div key={order.id} className="bg-[var(--card)] rounded-[var(--radius)] shadow-[var(--shadow)] p-4 hover:ring-1 hover:ring-[var(--ring)] hover:-translate-y-[1px] transition">
+            <div key={order.id} className="bg-white rounded-2xl shadow-sm p-4 hover:ring-1 hover:ring-[#13C2C2]/20 hover:-translate-y-[1px] transition">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-xs text-[var(--muted)] mb-1">주문일시</div>
-                  <div className="text-sm text-[var(--text)]">{formatOrderDate(order.created_at)}</div>
+                  <div className="text-xs text-gray-500 mb-1">주문일시</div>
+                  <div className="text-sm text-gray-900">{formatOrderDate(order.created_at)}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-[var(--muted)] mb-1">주소</div>
-                  <div className="text-sm text-[var(--text)]">{shortAddress(order.address, 15)}</div>
+                  <div className="text-xs text-gray-500 mb-1">주소</div>
+                  <div className="text-sm text-gray-500">{shortAddress(order.address, 15)}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-[var(--muted)] mb-1">결제상태</div>
+                  <div className="text-xs text-gray-500 mb-1">결제상태</div>
                   <div>
                     <Badge variant={order.paid ? 'success' : 'danger'}>
                       {order.paid ? '결제완료' : '미결제/실패'}
@@ -199,8 +199,8 @@ export default function OrderHistory() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-[var(--muted)] mb-1">결제금액</div>
-                  <div className={`text-sm ${order.paid ? "text-[var(--text)] font-semibold" : "text-[var(--muted)]"}`}>
+                  <div className="text-xs text-gray-500 mb-1">결제금액</div>
+                  <div className={`text-sm ${order.paid ? "text-gray-900 font-semibold" : "text-gray-500"}`}>
                     {order.payment_amount ? order.payment_amount.toLocaleString("ko-KR") + "원" : "-"}
                   </div>
                 </div>

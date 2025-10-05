@@ -9,7 +9,7 @@ import BackToTop from '@/components/common/BackToTop'
 export default function HomePage() {
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white pt-14 pb-24 md:pb-28" style={{ fontFamily: 'Pretendard, sans-serif' }}>
+    <div className="min-h-screen bg-gray-50 pt-14 pb-24 md:pb-28">
       <div id="top" />
       <Header />
       

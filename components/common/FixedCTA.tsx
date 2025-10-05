@@ -1,10 +1,12 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 
 export default function FixedCTA() {
   const router = useRouter()
   const pathname = usePathname()
+  const { data: session, status } = useSession()
 
   // Hidden on /order, /admin and their children
   const shouldHide = pathname.startsWith('/order') || pathname.startsWith('/admin')
@@ -14,7 +16,19 @@ export default function FixedCTA() {
   }
 
   const handleOrderClick = () => {
-    router.push('/order')
+    // Check if user is authenticated
+    if (status === 'loading') {
+      // Still loading, do nothing
+      return
+    }
+    
+    if (!session?.user) {
+      // User is not authenticated, redirect to sign in
+      router.push('/signin?from=order')
+    } else {
+      // User is authenticated, proceed to order page
+      router.push('/order')
+    }
   }
 
   return (
@@ -22,10 +36,11 @@ export default function FixedCTA() {
       <div className="max-w-md mx-auto px-4 py-3 pb-[max(env(safe-area-inset-bottom),12px)]">
         <button
           onClick={handleOrderClick}
-          className="w-full h-12 rounded-xl font-bold bg-black text-white hover:opacity-90 transition-opacity"
-          aria-label="11,900원에 주문하기"
+          disabled={status === 'loading'}
+          className="w-full h-12 rounded-xl font-bold bg-[#13C2C2] text-white hover:bg-[#0FA8A8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-label={status === 'loading' ? '로딩 중...' : '11,900원에 주문하기'}
         >
-          🛒 11,900원에 주문하기
+          {status === 'loading' ? '로딩 중...' : '🛒 11,900원에 주문하기'}
         </button>
       </div>
     </div>
