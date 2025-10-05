@@ -8,8 +8,8 @@ export default function FixedCTA() {
   const pathname = usePathname()
   const { data: session, status } = useSession()
 
-  // Hidden on /order, /admin and their children
-  const shouldHide = pathname.startsWith('/order') || pathname.startsWith('/admin')
+  // Hidden on /order, /admin, /auth/guest-gate and their children
+  const shouldHide = pathname.startsWith('/order') || pathname.startsWith('/admin') || pathname.startsWith('/auth/guest-gate')
   
   if (shouldHide) {
     return null
