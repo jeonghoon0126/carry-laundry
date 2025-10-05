@@ -31,9 +31,11 @@ const PAYMENT_METHODS: PaymentMethod[] = [
 interface SimpleCheckoutSheetProps {
   isLoading?: boolean
   shippingAddress?: AddressCore
+  /** 외부(상단) 배송지 컴포넌트를 쓰는 경우, 내부 배송지 입력을 숨긴다 */
+  hideAddressInput?: boolean
 }
 
-export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress }: SimpleCheckoutSheetProps) {
+export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress, hideAddressInput = true }: SimpleCheckoutSheetProps) {
   const router = useRouter()
   const [name, setName] = useState<string>('')
   const [phone, setPhone] = useState<string>('')
@@ -180,20 +182,22 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
         />
       </div>
 
-      {/* Address Input */}
-      <div className="rounded-2xl bg-white shadow-sm p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <MapPin className="w-5 h-5 text-[#13C2C2]" />
-          <label className="text-sm font-medium text-gray-900">배송지</label>
+      {/* Address Input - 외부 AddressSection을 쓰면 숨김 */}
+      {!hideAddressInput && (
+        <div className="rounded-2xl bg-white shadow-sm p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <MapPin className="w-5 h-5 text-[#13C2C2]" />
+            <label className="text-sm font-medium text-gray-900">배송지</label>
+          </div>
+          <input
+            type="text"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            placeholder="주소를 입력해주세요 (예: 서울 관악구 과천대로 863)"
+            className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#13C2C2] focus:border-transparent"
+          />
         </div>
-        <input
-          type="text"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          placeholder="주소를 입력해주세요 (예: 서울 관악구 과천대로 863)"
-          className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#13C2C2] focus:border-transparent"
-        />
-      </div>
+      )}
 
       {/* Special Requests */}
       <div className="rounded-2xl bg-white shadow-sm p-4">

@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react";
 import AddressSearch from "./AddressSearch";
 import { AddressCore, loadDefaultAddress, persistDefaultAddress } from "@/lib/addresses";
+import { cn } from "@/lib/utils";
 
 type Props = {
   value?: AddressCore | null;
   onChange?: (addr: AddressCore | null) => void;
+  className?: string;
 };
 
-export default function AddressSection({ value, onChange }: Props) {
+export default function AddressSection({ value, onChange, className }: Props) {
   const [open, setOpen] = useState(false);
   const [addr, setAddr] = useState<AddressCore | null>(value ?? null);
   const [loading, setLoading] = useState(true);
@@ -38,7 +40,7 @@ export default function AddressSection({ value, onChange }: Props) {
 
   if (loading) {
     return (
-      <section className="rounded-2xl bg-white shadow-sm border p-4">
+      <section className={cn("rounded-2xl border border-gray-200 bg-white shadow-sm p-5", className)}>
         <div className="h-5 w-28 bg-gray-100 rounded mb-3" />
         <div className="h-12 w-full bg-gray-100 rounded" />
       </section>
@@ -48,7 +50,7 @@ export default function AddressSection({ value, onChange }: Props) {
   // 빈 상태
   if (!addr?.address1) {
     return (
-      <section className="rounded-2xl bg-white shadow-sm border p-4">
+      <section className={cn("rounded-2xl border border-gray-200 bg-white shadow-sm p-5", className)}>
         <p className="text-lg font-semibold mb-3">배송지 정보</p>
         <button
           onClick={() => setOpen(true)}
@@ -63,7 +65,7 @@ export default function AddressSection({ value, onChange }: Props) {
 
   // 주소가 있는 상태
   return (
-    <section className="rounded-2xl bg-white shadow-sm border p-4">
+    <section className={cn("rounded-2xl border border-gray-200 bg-white shadow-sm p-5", className)}>
       <div className="flex items-center justify-between mb-3">
         <p className="text-lg font-semibold">배송지 정보</p>
         <button
