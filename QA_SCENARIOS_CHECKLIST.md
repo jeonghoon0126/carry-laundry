@@ -1,257 +1,125 @@
-# 🧪 QA Scenarios Checklist
+# QA Scenarios Checklist - New Order Page (`/order/new`)
 
-## Prerequisites
-- Server running on http://localhost:3000
-- Clean browser state (clear cookies/localStorage/sessionStorage)
-- Valid test data ready
+## 🎨 UI/UX Validation
 
-## ✅ **1. Runtime Error Check**
+### Initial Load & Layout
+- [ ] **390px View**: Page loads correctly at 390px width with proper card radius (`rounded-2xl`)
+- [ ] **Shadow**: Cards display subtle shadow (`shadow-sm`) consistently
+- [ ] **Responsive**: On desktop (≥640px), page stays centered at 390px max-width
+- [ ] **Background**: Page uses `bg-gray-50` background
+- [ ] **Icons**: All icons use brand color `#13C2C2`
 
-### Test: Module Resolution Error Fixed
-**Steps:**
-1. Navigate to http://localhost:3000/home
-2. Check browser console for errors
-3. Navigate to http://localhost:3000/order
-4. Check browser console for errors
+## 📋 Form Validation
 
-**Expected Results:**
-- ✅ No "Cannot find module './611.js'" errors
-- ✅ No "Cannot find module './996.js'" errors  
-- ✅ Pages load successfully with 200 status
-- ✅ No webpack module resolution errors in console
+### Address Selection
+- [ ] **Default Address**: Shows mock address "서울 관악구 과천대로 863 (남현동)"
+- [ ] **Change Button**: "변경" button links to `/home` (temporary)
+- [ ] **CTA State**: Button disabled when address not selected (always enabled for mock)
 
-**Status:** ✅ PASS - Clean build and dev server running without module errors
+### Time Selection
+- [ ] **Pickup Times**: 4 options (오늘 오후/저녁, 내일 오전/오후) display correctly
+- [ ] **Delivery Times**: 4 options (내일 오후/저녁, 모레 오전/오후) display correctly
+- [ ] **Selection State**: Selected time shows brand color border and background
+- [ ] **Hover State**: Unselected times show hover effects
+- [ ] **Form Validation**: CTA disabled until both pickup and delivery times selected
 
----
+### Payment Method
+- [ ] **Default Selection**: "토스 간편결제" selected by default
+- [ ] **Radio Cards**: Both payment methods display as selectable cards
+- [ ] **Selection State**: Selected method shows brand color border and background
+- [ ] **Default Badge**: "토스 간편결제" shows "기본" badge
 
-## ✅ **2. Order Form Persistence (Guest User Flow)**
+### Special Requests
+- [ ] **Textarea**: 3-line textarea with placeholder text
+- [ ] **Focus State**: Textarea shows brand color focus ring
+- [ ] **Optional Field**: Not required for form validation
 
-### Test: Draft Saved During Login Redirect
-**Steps:**
-1. Open incognito/private browser window
-2. Navigate to http://localhost:3000/order
-3. Fill in the form:
-   - Name: "김철수"
-   - Phone: "010-1234-5678" 
-   - Address: "서울특별시 관악구 신림동 123-45"
-   - Building Detail: "101호"
-4. Click "주문 접수하기" button
-5. Should redirect to `/signin?from=order`
-6. Complete Kakao OAuth login
-7. After login, should return to `/order`
+## 💰 Pricing Display
 
-**Expected Results:**
-- ✅ Form fields are pre-filled with exact values from step 3
-- ✅ All fields retain their values: name, phone, address, building detail
-- ✅ User can continue with order submission without re-entering data
+### Order Summary
+- [ ] **Service Price**: "세탁 서비스 10,000원" displays correctly
+- [ ] **Delivery Fee**: "배달비 1,900원" displays correctly
+- [ ] **Total Format**: "총 결제금액 11,900원" with proper comma formatting
+- [ ] **Typography**: Total amount uses `font-semibold`
 
-**Dev Console Check:**
-```javascript
-// Should see these logs only in development
-console.info('Draft saved to sessionStorage')
-console.info('Draft hydrated from sessionStorage')
-```
+## 🔧 Technical Validation
 
----
+### Environment Variables
+- [ ] **Missing Client Key**: When `NEXT_PUBLIC_TOSS_CLIENT_KEY` is missing:
+  - [ ] Red alert badge appears at top of page
+  - [ ] CTA button remains disabled
+  - [ ] Console shows appropriate warning
 
-## ✅ **3. Order Submission Reset**
+### Payment Flow
+- [ ] **Form Validation**: CTA only enabled when all required fields selected
+- [ ] **Console Logging**: Order payload logged to console on submit
+- [ ] **API Integration**: Posts to `/api/orders` (when implemented)
+- [ ] **Toss Integration**: Loads Toss Payments script when payment method is 'toss'
 
-### Test: Draft Cleared After Successful Order
-**Steps:**
-1. As a logged-in user, go to http://localhost:3000/order
-2. Fill in complete order form with valid Gwanak-gu address:
-   - Name: "이영희"
-   - Phone: "010-9876-5432"
-   - Address: "서울특별시 관악구 봉천동"
-3. Submit the order
-4. Wait for success message
-5. Refresh the page (F5 or Ctrl+R)
-6. Check form state
+### Error Handling
+- [ ] **Network Errors**: Graceful handling of API failures
+- [ ] **Fallback**: Redirects to `/order?error=...` on payment failure
+- [ ] **Loading States**: Shows skeleton during data loading
 
-**Expected Results:**
-- ✅ Order submission succeeds with success message
-- ✅ After refresh, form is completely empty
-- ✅ No previous values are restored
-- ✅ sessionStorage is cleared
+## 🎯 End-to-End Flow
 
-**Dev Console Check:**
-```javascript
-console.info('Draft cleared from sessionStorage')
-```
+### Successful Payment
+- [ ] **Order Creation**: Order successfully created in database
+- [ ] **Payment Processing**: Toss Payments widget opens correctly
+- [ ] **Completion Redirect**: After successful payment, redirects to `/order/completed`
+- [ ] **MyPage Integration**: Order appears in MyPage with "결제완료" badge
 
----
+### Navigation
+- [ ] **Back Button**: Arrow left button navigates back to previous page
+- [ ] **Address Change**: "변경" button navigates to `/home`
+- [ ] **Error Redirects**: Failed payments redirect to `/order?error=...`
 
-## ✅ **4. Security Validation**
+## 📱 Mobile-Specific Tests
 
-### Test 4A: API Authentication Enforcement
-**Steps:**
-1. Open terminal/command prompt
-2. Run the following curl command:
-```bash
-curl -X POST http://localhost:3000/api/orders \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Test User","phone":"010-1234-5678","address":"서울특별시 관악구 신림동"}'
-```
+### Touch Interactions
+- [ ] **Button Sizes**: All buttons have adequate touch targets (≥44px)
+- [ ] **Time Selection**: Touch-friendly time selection chips
+- [ ] **Radio Cards**: Easy to select payment methods on mobile
+- [ ] **Sticky CTA**: Bottom CTA remains accessible while scrolling
 
-**Expected Results:**
-- ✅ HTTP Status: 401 Unauthorized
-- ✅ Response Body: `{"error":"로그인이 필요합니다."}`
-- ✅ No order created in database
+### Performance
+- [ ] **Loading Speed**: Page loads quickly on mobile networks
+- [ ] **Smooth Scrolling**: No jank during scroll interactions
+- [ ] **Memory Usage**: No memory leaks during navigation
 
-### Test 4B: User ID Security
-**Steps:**
-1. Login as a valid user
-2. Open browser developer tools → Network tab
-3. Fill and submit order form
-4. Inspect the POST request to `/api/orders`
-5. Check the request payload
-6. Check the database entry (if accessible)
+## 🔍 Accessibility
 
-**Expected Results:**
-- ✅ Client request body does NOT contain `user_id` field
-- ✅ Server automatically assigns `user_id` from session
-- ✅ Database record has correct `user_id` matching the logged-in user
-- ✅ Client cannot manipulate `user_id` to impersonate other users
+### Keyboard Navigation
+- [ ] **Tab Order**: Logical tab sequence through form elements
+- [ ] **Focus Indicators**: Clear focus rings on interactive elements
+- [ ] **Escape Key**: Sheet closes with Escape key (when implemented)
+
+### Screen Readers
+- [ ] **Labels**: All form elements have proper labels
+- [ ] **Error Messages**: Error states announced to screen readers
+- [ ] **Status Updates**: Payment status changes announced
+
+## 🚀 Production Readiness
+
+### Code Quality
+- [ ] **TypeScript**: No type errors in build
+- [ ] **Linting**: No ESLint errors
+- [ ] **Console Clean**: No console errors in production build
+
+### Security
+- [ ] **API Keys**: Client keys properly exposed, secret keys hidden
+- [ ] **Input Validation**: All user inputs properly validated
+- [ ] **XSS Prevention**: No unescaped user content in DOM
 
 ---
 
-## ✅ **5. Edge Case Testing**
+## 📝 Notes
+- Test with both authenticated and unauthenticated users
+- Verify payment flow works with test card numbers
+- Check error states with network throttling
+- Validate responsive design at various breakpoints
 
-### Test 5A: Session Expiration During Form Fill
-**Steps:**
-1. Login and go to `/order`
-2. Fill form partially
-3. Wait for session to expire (or manually clear auth cookies)
-4. Complete form and submit
-5. Check behavior
-
-**Expected Results:**
-- ✅ API returns 401 status
-- ✅ Form data is preserved
-- ✅ User redirected to `/signin?from=order`
-- ✅ After re-login, form data is restored
-
-### Test 5B: Storage Validation
-**Steps:**
-1. Go to `/order` and fill form
-2. Open browser DevTools → Application → Session Storage
-3. Find key `orderDraft:v1`
-4. Manually corrupt the JSON (invalid format)
-5. Refresh page
-
-**Expected Results:**
-- ✅ Corrupted data is ignored gracefully
-- ✅ Form starts with empty state
-- ✅ No JavaScript errors in console
-
-### Test 5C: Network Issues
-**Steps:**
-1. Fill form and submit
-2. Simulate network failure (disconnect internet)
-3. Try to submit
-
-**Expected Results:**
-- ✅ Error message displayed to user
-- ✅ Form data remains intact
-- ✅ User can retry submission when network restored
-
----
-
-## ✅ **6. Browser Compatibility**
-
-### Test 6A: sessionStorage Support
-**Steps:**
-1. Test in Chrome, Firefox, Safari, Edge
-2. Fill form and go through login flow
-3. Verify persistence works in each browser
-
-**Expected Results:**
-- ✅ Draft persistence works in all modern browsers
-- ✅ Graceful degradation if sessionStorage unavailable
-
----
-
-## ✅ **7. Performance Validation**
-
-### Test 7A: Debounced Writes
-**Steps:**
-1. Open DevTools → Application → Session Storage
-2. Go to `/order` form
-3. Type rapidly in the name field
-4. Observe sessionStorage updates
-
-**Expected Results:**
-- ✅ sessionStorage updates are debounced (not on every keystroke)
-- ✅ Final value is correctly saved after 300ms delay
-- ✅ No excessive storage API calls
-
----
-
-## 🎯 **Quick Smoke Test Checklist**
-
-For rapid verification, run these core scenarios:
-
-- [ ] **Clean Start**: Visit `/home` → No module errors
-- [ ] **Guest Flow**: Fill `/order` → Submit → Login → Return with data intact  
-- [ ] **Submit Reset**: Logged user submits order → Form clears after success
-- [ ] **API Security**: `curl` without auth → Returns 401 + "로그인이 필요합니다."
-- [ ] **Data Security**: Submitted orders have correct `user_id` from session
-
----
-
-## 📋 **Test Data Templates**
-
-### Valid Gwanak-gu Addresses (for successful orders):
-```
-서울특별시 관악구 신림동
-서울특별시 관악구 봉천동  
-서울 관악구 신림로 123
-서울 관악구 관악로 456
-```
-
-### Invalid Addresses (should be rejected):
-```
-서울특별시 강남구 역삼동
-부산광역시 해운대구
-경기도 성남시 분당구
-```
-
-### Valid Phone Numbers:
-```
-010-1234-5678
-010-9876-5432
-011-123-4567
-016-987-6543
-```
-
-### Invalid Phone Numbers:
-```
-02-123-4567  
-1234-5678
-010-12345
-abc-defg-hijk
-```
-
----
-
-## 🚨 **Failure Scenarios to Watch For**
-
-1. **Form data lost** during login redirect
-2. **Previous order data** appearing in fresh form
-3. **Unauthorized API access** succeeding  
-4. **Client-side user_id** being accepted by server
-5. **Module resolution errors** returning
-6. **Memory leaks** from uncleared timeouts
-7. **XSS vulnerabilities** from unsanitized draft data
-
----
-
-## ✅ **Success Criteria Summary**
-
-All tests must pass for deployment readiness:
-
-- **Runtime Stability**: No module errors, clean dev/build
-- **Data Persistence**: Form values survive login flow  
-- **Security**: Authentication enforced, user_id server-controlled
-- **UX**: Seamless experience, no data loss
-- **Performance**: Efficient storage usage, no excessive API calls
+## ✅ Sign-off
+- [ ] **QA Lead**: _________________ Date: _________
+- [ ] **Product Owner**: _________________ Date: _________
+- [ ] **Developer**: _________________ Date: _________

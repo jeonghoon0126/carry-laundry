@@ -10,6 +10,10 @@ export interface OrderHistoryItem {
   name: string
   phone: string
   address: string
+  paid: boolean
+  payment_amount: number | null
+  payment_method: string | null
+  payment_receipt_url: string | null
 }
 
 export interface OrderHistoryResponse {
@@ -38,15 +42,15 @@ export async function getUserOrderHistory(
     // Build query with cursor-based pagination
     let query = supabase
       .from('orders')
-      .select('id, created_at, name, phone, address')
+      .select('id, created_at, name, phone, address, paid, payment_amount, payment_method, payment_receipt_url')
       .eq('user_id', session.user.id)
-      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
       .limit(limit + 1) // Fetch one extra to check if there are more
 
     // Apply cursor if provided
     if (cursor) {
-      const cursorDate = new Date(cursor)
-      query = query.lt('created_at', cursorDate.toISOString())
+      const cursorId = parseInt(cursor, 10)
+      query = query.lt('id', cursorId)
     }
 
     const { data, error } = await query
@@ -64,7 +68,7 @@ export async function getUserOrderHistory(
     
     // Generate cursors for pagination
     const nextCursor = hasMore && actualOrders.length > 0 
-      ? actualOrders[actualOrders.length - 1].created_at 
+      ? actualOrders[actualOrders.length - 1].id.toString() 
       : undefined
       
     const prevCursor = cursor || undefined

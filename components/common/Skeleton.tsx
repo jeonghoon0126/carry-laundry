@@ -1,19 +1,28 @@
-'use client'
+import React from 'react'
+import { cn } from '@/lib/utils'
 
-export default function Skeleton({ className = '' }: { className?: string }) {
-  return (
-    <div
-      className={
-        'relative overflow-hidden rounded-md bg-gray-200/70 ' +
-        'before:absolute before:inset-0 before:-translate-x-full ' +
-        'before:animate-[shimmer_1.2s_infinite] ' +
-        'before:bg-gradient-to-r before:from-transparent before:via-white/60 before:to-transparent ' +
-        className
-      }
-    />
-  )
+interface SkeletonProps {
+  h?: string
+  w?: string
+  className?: string
 }
 
+const Skeleton = React.forwardRef<HTMLDivElement, SkeletonProps>(
+  ({ h, w, className }, ref) => {
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          "animate-pulse rounded-[var(--radius)] bg-[#1a2141]/60",
+          h && `h-${h}`,
+          w && `w-${w}`,
+          className
+        )}
+      />
+    )
+  }
+)
 
+Skeleton.displayName = "Skeleton"
 
-
+export default Skeleton

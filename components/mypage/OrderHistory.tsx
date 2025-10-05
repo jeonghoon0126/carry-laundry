@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react'
 import { getUserOrderHistory, OrderHistoryItem } from '@/lib/actions/orders'
 import { formatOrderDate, maskPhone, shortAddress } from '@/lib/utils/format'
 import { useRouter } from 'next/navigation'
+import EmptyState from '@/components/common/EmptyState'
+import Skeleton from '@/components/common/Skeleton'
+import Badge from '@/components/ui/Badge'
 
 interface OrderHistoryState {
   orders: OrderHistoryItem[]
@@ -66,7 +69,14 @@ export default function OrderHistory() {
   }
 
   if (state.loading) {
-    return <OrderHistorySkeleton />
+    return (
+      <div className="space-y-3">
+        <h2 className="text-xl font-semibold text-[var(--text)] mb-4">최근 주문</h2>
+        {[...Array(3)].map((_, i) => (
+          <Skeleton key={i} h={64} className="w-full mb-3" />
+        ))}
+      </div>
+    )
   }
 
   if (state.error) {
@@ -85,69 +95,80 @@ export default function OrderHistory() {
   }
 
   if (state.orders.length === 0) {
-    return <EmptyState onOrderClick={handleOrderClick} />
+    return (
+      <div>
+        <h2 className="text-xl font-semibold text-[var(--text)] mb-4">최근 주문</h2>
+        <EmptyState 
+          title="아직 주문이 없어요"
+          actionLabel="주문하러 가기"
+          onAction={handleOrderClick}
+        />
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
+      <h2 className="text-xl font-semibold text-[var(--text)]">최근 주문</h2>
+      
       {/* Mobile-first Orders List */}
       <div className="space-y-4">
         {/* Desktop Table View */}
-        <div className="hidden md:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="hidden md:block bg-[var(--card)] rounded-[var(--radius)] shadow-[var(--shadow)] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-[#1a2141]">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted)] uppercase tracking-wider">
                     주문일시
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted)] uppercase tracking-wider">
                     주문자
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted)] uppercase tracking-wider">
                     연락처
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted)] uppercase tracking-wider">
                     주소
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted)] uppercase tracking-wider">
                     주문번호
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted)] uppercase tracking-wider">
                     결제상태
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted)] uppercase tracking-wider">
                     결제금액
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-[var(--card)] divide-y divide-[#27314f]">
                 {state.orders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <tr key={order.id} className="hover:ring-1 hover:ring-[var(--ring)] hover:-translate-y-[1px] transition">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text)]">
                       {formatOrderDate(order.created_at)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text)]">
                       {order.name}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--muted)]">
                       {maskPhone(order.phone)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
+                    <td className="px-6 py-4 text-sm text-[var(--muted)]">
                       {shortAddress(order.address)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-[var(--muted)]">
                       #{order.id}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {order.paid ? (
-                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded-md text-xs font-medium">결제완료</span>
-                      ) : (
-                        <span className="bg-red-100 text-red-800 px-2 py-1 rounded-md text-xs font-medium">미결제/실패</span>
-                      )}
+                      <Badge variant={order.paid ? 'success' : 'danger'}>
+                        {order.paid ? '결제완료' : '미결제/실패'}
+                      </Badge>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                      {order.payment_amount ? order.payment_amount.toLocaleString("ko-KR") + "원" : "-"}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
+                      <span className={order.paid ? "text-[var(--text)] font-semibold" : "text-[var(--muted)]"}>
+                        {order.payment_amount ? order.payment_amount.toLocaleString("ko-KR") + "원" : "-"}
+                      </span>
                     </td>
                   </tr>
                 ))}
@@ -159,39 +180,29 @@ export default function OrderHistory() {
         {/* Mobile Card View */}
         <div className="md:hidden space-y-4">
           {state.orders.map((order) => (
-            <div key={order.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <div className="flex justify-between items-start mb-3">
-                <div className="text-sm font-medium text-gray-900">{order.name}</div>
-                <div className="text-xs text-gray-500 font-mono">#{order.id}</div>
-              </div>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">주문일시</span>
-                  <span className="text-gray-900">{formatOrderDate(order.created_at)}</span>
+            <div key={order.id} className="bg-[var(--card)] rounded-[var(--radius)] shadow-[var(--shadow)] p-4 hover:ring-1 hover:ring-[var(--ring)] hover:-translate-y-[1px] transition">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-xs text-[var(--muted)] mb-1">주문일시</div>
+                  <div className="text-sm text-[var(--text)]">{formatOrderDate(order.created_at)}</div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">연락처</span>
-                  <span className="text-gray-900">{maskPhone(order.phone)}</span>
+                <div>
+                  <div className="text-xs text-[var(--muted)] mb-1">주소</div>
+                  <div className="text-sm text-[var(--text)]">{shortAddress(order.address, 15)}</div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">주소</span>
-                  <span className="text-gray-900 text-right ml-4">{shortAddress(order.address, 20)}</span>
+                <div>
+                  <div className="text-xs text-[var(--muted)] mb-1">결제상태</div>
+                  <div>
+                    <Badge variant={order.paid ? 'success' : 'danger'}>
+                      {order.paid ? '결제완료' : '미결제/실패'}
+                    </Badge>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">결제상태</span>
-                  <span>
-                    {order.paid ? (
-                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded-md text-xs font-medium">결제완료</span>
-                    ) : (
-                      <span className="bg-red-100 text-red-800 px-2 py-1 rounded-md text-xs font-medium">미결제/실패</span>
-                    )}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">결제금액</span>
-                  <span className="text-gray-900 font-medium">
+                <div className="text-right">
+                  <div className="text-xs text-[var(--muted)] mb-1">결제금액</div>
+                  <div className={`text-sm ${order.paid ? "text-[var(--text)] font-semibold" : "text-[var(--muted)]"}`}>
                     {order.payment_amount ? order.payment_amount.toLocaleString("ko-KR") + "원" : "-"}
-                  </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -228,48 +239,6 @@ export default function OrderHistory() {
   )
 }
 
-function OrderHistorySkeleton() {
-  return (
-    <div className="space-y-4">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-6">
-          <div className="animate-pulse space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="flex space-x-4">
-                <div className="h-4 bg-gray-200 rounded w-32"></div>
-                <div className="h-4 bg-gray-200 rounded w-24"></div>
-                <div className="h-4 bg-gray-200 rounded w-28"></div>
-                <div className="h-4 bg-gray-200 rounded w-40"></div>
-                <div className="h-4 bg-gray-200 rounded w-20"></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function EmptyState({ onOrderClick }: { onOrderClick: () => void }) {
-  return (
-    <div className="text-center py-12">
-      <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
-        <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-        </svg>
-      </div>
-      <h3 className="text-lg font-medium text-gray-900 mb-2">주문 내역이 아직 없어요.</h3>
-      <p className="text-gray-500 mb-6">첫 주문을 진행해보세요</p>
-      <button
-        onClick={onOrderClick}
-        className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-        aria-label="주문 페이지로 이동"
-      >
-        🛒 주문하러 가기
-      </button>
-    </div>
-  )
-}
 
 
 
