@@ -1,16 +1,7 @@
 "use client";
 import Image from "next/image";
-import { useSearchParams } from "next/navigation";
-import { useMemo } from "react";
 
 export default function GuestGatePage() {
-  const sp = useSearchParams();
-  const from = sp.get("from") || "order";
-  const callbackUrl = useMemo(() => {
-    if (from === "order") return "/order";
-    return "/";
-  }, [from]);
-
   return (
     <main className="min-h-[100dvh] w-full bg-gray-50 flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-[420px] rounded-2xl bg-white shadow-sm border border-gray-100 p-6 sm:p-8 text-center">
@@ -24,7 +15,6 @@ export default function GuestGatePage() {
             priority
           />
         </div>
-
         {/* 서브 비주얼 이미지 */}
         <div className="flex justify-center">
           <Image
