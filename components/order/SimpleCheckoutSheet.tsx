@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, MapPin, MessageSquare, CreditCard } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
+import type { AddressCore } from '@/lib/addresses'
 
 interface PaymentMethod {
   id: string
@@ -29,9 +30,10 @@ const PAYMENT_METHODS: PaymentMethod[] = [
 
 interface SimpleCheckoutSheetProps {
   isLoading?: boolean
+  shippingAddress?: AddressCore
 }
 
-export default function SimpleCheckoutSheet({ isLoading = false }: SimpleCheckoutSheetProps) {
+export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress }: SimpleCheckoutSheetProps) {
   const router = useRouter()
   const [name, setName] = useState<string>('')
   const [phone, setPhone] = useState<string>('')
