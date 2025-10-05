@@ -259,7 +259,11 @@ export function preserveDraftAndSignIn(
   
   // Use router in a React context
   const router = useRouter()
-  router.push(`/signin?from=${next}`)
+  if (next === 'order') {
+    router.push('/auth/guest-gate?from=order')
+  } else {
+    router.push(`/signin?from=${next}`)
+  }
 }
 
 // Hook wrapper for preserveDraftAndSignIn to be used in components
@@ -268,6 +272,10 @@ export function usePreserveDraftAndSignIn() {
   
   return useCallback((currentDraft: OrderDraft, next: string = 'order') => {
     writeToStorage(currentDraft)
-    router.push(`/signin?from=${next}`)
+    if (next === 'order') {
+      router.push('/auth/guest-gate?from=order')
+    } else {
+      router.push(`/signin?from=${next}`)
+    }
   }, [router])
 }
