@@ -23,8 +23,8 @@ export default function FixedCTA() {
     }
     
     if (!session?.user) {
-      // User is not authenticated, redirect to sign in
-      router.push('/signin?from=order')
+      // User is not authenticated, redirect to guest gate
+      router.push('/auth/guest-gate?from=order')
     } else {
       // User is authenticated, proceed to order page
       router.push('/order')

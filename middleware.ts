@@ -1,49 +1,26 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
-  // Only protect /admin route
-  if (request.nextUrl.pathname.startsWith('/admin')) {
-    const authHeader = request.headers.get('authorization')
-    
-    if (!authHeader || !authHeader.startsWith('Basic ')) {
-      return new NextResponse('Authentication required', {
-        status: 401,
-        headers: {
-          'WWW-Authenticate': 'Basic realm="Admin Access"',
-        },
-      })
-    }
+export function middleware(req: NextRequest) {
+  const { nextUrl, cookies } = req;
+  const url = nextUrl.clone();
+  const isOrder = url.pathname.startsWith("/order");
 
-    // Decode base64 credentials
-    const base64Credentials = authHeader.split(' ')[1]
-    const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii')
-    const [username, password] = credentials.split(':')
+  // 세션 쿠키(예: next-auth)
+  const hasSession =
+    cookies.get("next-auth.session-token") ||
+    cookies.get("__Secure-next-auth.session-token");
 
-    // Get credentials from environment variables
-    const adminUser = process.env.ADMIN_USER
-    const adminPass = process.env.ADMIN_PASS
-
-    // Check if credentials are configured
-    if (!adminUser || !adminPass) {
-      return new NextResponse('Admin credentials not configured', {
-        status: 500,
-      })
-    }
-
-    // Validate credentials
-    if (username !== adminUser || password !== adminPass) {
-      return new NextResponse('Invalid credentials', {
-        status: 401,
-        headers: {
-          'WWW-Authenticate': 'Basic realm="Admin Access"',
-        },
-      })
-    }
+  if (isOrder && !hasSession) {
+    // 기존 /signin?from=order 대신, 카카오 로그인 유도 게이트로 리디렉션
+    url.pathname = "/auth/guest-gate";
+    url.searchParams.set("from", "order");
+    return NextResponse.redirect(url);
   }
 
-  return NextResponse.next()
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/admin/:path*']
-}
+  matcher: ["/order/:path*"],
+};
