@@ -8,9 +8,16 @@ export const revalidate = 0;
 
 function getSupabaseServerClient() {
   const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
+  console.log('[Toss] Supabase config check:', {
+    hasUrl: !!url,
+    hasServiceRoleKey: !!key,
+    urlHost: url ? new URL(url).hostname : 'missing'
+  });
+  
   if (!url || !key) {
-    throw new Error('Supabase env missing at runtime');
+    throw new Error(`Supabase env missing: url=${!!url}, serviceRoleKey=${!!key}`);
   }
   return createClient(url, key);
 }
