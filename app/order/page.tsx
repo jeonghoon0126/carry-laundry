@@ -13,18 +13,50 @@ function OrderPageContent() {
   const [shippingAddress, setShippingAddress] = useState<AddressCore | null>(null);
   const searchParams = useSearchParams();
   const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     // 결제 실패 에러 체크
     const error = searchParams.get('error');
     const reason = searchParams.get('reason');
+    const status = searchParams.get('status');
+    
+    // 디버깅을 위한 상세 로그
+    console.log('OrderPage - URL params check:', {
+      error,
+      reason,
+      status,
+      allParams: Object.fromEntries(searchParams.entries()),
+      timestamp: new Date().toISOString()
+    });
+    
     if (error === 'payment_failed') {
       setShowError(true);
-      console.error('Payment failed:', { error, reason });
+      
+      // reason이 null이거나 비어있을 때 기본 메시지 사용
+      const errorReason = reason && reason.trim() ? reason : '알 수 없는 오류가 발생했습니다.';
+      const errorDetails = status ? ` (상태코드: ${status})` : '';
+      const fullErrorMessage = `${errorReason}${errorDetails}`;
+      
+      setErrorMessage(fullErrorMessage);
+      
+      console.error('Payment failed:', { 
+        error, 
+        reason: errorReason, 
+        status,
+        originalReason: reason,
+        fullMessage: fullErrorMessage,
+        timestamp: new Date().toISOString(),
+        location: 'OrderPageContent useEffect',
+        url: window.location.href,
+        searchParamsString: searchParams.toString()
+      });
+      
       // URL에서 에러 파라미터 제거
       const url = new URL(window.location.href);
       url.searchParams.delete('error');
       url.searchParams.delete('reason');
+      url.searchParams.delete('status');
       window.history.replaceState({}, '', url.toString());
     }
   }, [searchParams]);
@@ -39,13 +71,14 @@ function OrderPageContent() {
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
             <div className="flex items-center gap-2">
               <span className="text-red-600">⚠️</span>
-              <div>
+              <div className="flex-1">
                 <p className="text-red-800 font-medium">결제에 실패했습니다</p>
-                <p className="text-red-600 text-sm">다시 시도해주세요</p>
+                <p className="text-red-600 text-sm mt-1">{errorMessage}</p>
+                <p className="text-red-500 text-xs mt-1">다시 시도해주세요</p>
               </div>
               <button
                 onClick={() => setShowError(false)}
-                className="ml-auto text-red-400 hover:text-red-600"
+                className="ml-auto text-red-400 hover:text-red-600 p-1"
               >
                 ✕
               </button>
@@ -55,13 +88,13 @@ function OrderPageContent() {
 
         {/* 배송지 정보 섹션 */}
         <AddressSection
-          value={shippingAddress}
+          value={shippingAddress || undefined}
           onChange={(addr) => setShippingAddress(addr)}
           className="mb-4"
         />
 
         {/* 결제 섹션 (isSubmitting은 내부에서 관리) */}
-        <SimpleCheckoutSheet shippingAddress={shippingAddress} />
+        <SimpleCheckoutSheet shippingAddress={shippingAddress || undefined} />
       </div>
     </main>
   );

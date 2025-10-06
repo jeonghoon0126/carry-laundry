@@ -153,7 +153,7 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
       const customerEmail = 'customer@example.com'
       
       const successUrl = `${window.location.origin}/api/payments/confirm`
-      const failUrl = `${window.location.origin}/order?error=payment_failed`
+      const failUrl = `${window.location.origin}/order?error=payment_failed&reason=${encodeURIComponent('결제가 취소되었습니다')}`
 
       console.info('[Toss] Opening widget', { orderId, orderName, amount, successUrl, failUrl })
 
@@ -191,12 +191,24 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
       }
     } catch (err) {
       console.error("Payment error", err);
-      const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
+      
+      let errorMessage = '알 수 없는 오류가 발생했습니다.';
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      } else if (err && typeof err === 'object' && 'message' in err) {
+        errorMessage = String(err.message);
+      }
+      
       console.error('Payment error details:', {
         error: err,
         message: errorMessage,
-        stack: err instanceof Error ? err.stack : undefined
+        stack: err instanceof Error ? err.stack : undefined,
+        errorType: typeof err,
+        errorConstructor: err?.constructor?.name
       });
+      
       router.push(`/order?error=payment_failed&reason=${encodeURIComponent(errorMessage)}`);
     } finally {
       setIsSubmitting(false);

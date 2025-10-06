@@ -136,7 +136,7 @@ export default function OrderForm() {
             || "http://localhost:3000";
 
       const successUrl = `${origin}/api/payments/confirm`;
-      const failUrl    = `${origin}/order?error=payment_failed`;
+      const failUrl    = `${origin}/order?error=payment_failed&reason=${encodeURIComponent('결제가 취소되었습니다')}`;
       
       console.info('[Order] created', { id: orderId, amount })
       console.info('[Toss] open', { orderId: uniqueOrderId, amount })
@@ -152,8 +152,25 @@ export default function OrderForm() {
       })
     } catch (error) {
       console.error('Payment error:', error)
-      alert(error?.message || '결제 중 오류가 발생했습니다.')
-      setIsProcessingPayment(false)
+      
+      let errorMessage = '결제 중 오류가 발생했습니다.';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error && typeof error === 'object' && 'message' in error) {
+        errorMessage = String(error.message);
+      }
+      
+      console.error('Payment error details:', {
+        error,
+        message: errorMessage,
+        errorType: typeof error,
+        errorConstructor: error?.constructor?.name
+      });
+      
+      alert(errorMessage);
+      setIsProcessingPayment(false);
     }
   }
 

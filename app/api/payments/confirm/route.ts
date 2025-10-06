@@ -31,7 +31,8 @@ export async function GET(request: NextRequest) {
       url: request.url,
       method: request.method,
       userAgent: request.headers.get('user-agent'),
-      referer: request.headers.get('referer')
+      referer: request.headers.get('referer'),
+      timestamp: new Date().toISOString()
     })
 
     // Extract query parameters
@@ -58,16 +59,24 @@ export async function GET(request: NextRequest) {
 
     // Validate parameters
     if (!paymentKey || !orderId || !amountRaw || isNaN(amount)) {
-      console.warn('[Toss] invalid-params')
-      return Response.redirect(new URL('/order?error=payment_failed', request.url), 302)
+      console.warn('[Toss] invalid-params', { paymentKey: !!paymentKey, orderId, amountRaw, amount })
+      const params = new URLSearchParams({
+        error: 'payment_failed',
+        reason: '결제 파라미터가 올바르지 않습니다'
+      })
+      return Response.redirect(new URL(`/order?${params.toString()}`, request.url), 302)
     }
 
     // Extract dbId from orderId format: "order_<dbId>_<timestamp>"
     const parts = orderId.split('_')
     const dbId = Number(parts[1])
     if (!dbId) {
-      console.warn('[Toss] invalid-orderId-format', { orderId })
-      return Response.redirect(new URL('/order?error=payment_failed', request.url), 302)
+      console.warn('[Toss] invalid-orderId-format', { orderId, parts })
+      const params = new URLSearchParams({
+        error: 'payment_failed',
+        reason: '주문 ID 형식이 올바르지 않습니다'
+      })
+      return Response.redirect(new URL(`/order?${params.toString()}`, request.url), 302)
     }
 
     // Build Basic auth header exactly as specified
@@ -143,7 +152,11 @@ export async function GET(request: NextRequest) {
 
       if (upErr) {
         console.error("Update failed", upErr);
-        return NextResponse.redirect(new URL('/order?error=payment_failed', request.url));
+        const params = new URLSearchParams({
+          error: 'payment_failed',
+          reason: '주문 정보 업데이트에 실패했습니다'
+        })
+        return NextResponse.redirect(new URL(`/order?${params.toString()}`, request.url));
       }
 
       return Response.redirect(new URL('/order/completed', request.url), 302)
@@ -151,15 +164,22 @@ export async function GET(request: NextRequest) {
       // Use the already parsed body or raw text
       let reason = ''
       if (body && typeof body === 'object') {
-        reason = body?.message || body?.code || ''
+        reason = body?.message || body?.code || body?.error || ''
       } else {
         reason = raw || ''
+      }
+      
+      // reason이 비어있을 때 기본 메시지 제공
+      if (!reason || reason.trim() === '') {
+        reason = `결제 확인 실패 (HTTP ${tossRes.status})`
       }
       
       console.warn('[Toss] confirm-fail', { 
         status: tossRes.status, 
         body: body || raw,
-        reason: reason
+        reason: reason,
+        paymentKey: paymentKey?.slice(0, 10) + '...',
+        orderId: orderId
       })
       
       const params = new URLSearchParams({
@@ -167,11 +187,40 @@ export async function GET(request: NextRequest) {
         status: String(tossRes.status),
         reason: reason.slice(0, 200)
       })
+      
+      console.warn('[Toss] redirecting with params:', {
+        params: params.toString(),
+        reason: reason,
+        status: tossRes.status,
+        redirectUrl: `/order?${params.toString()}`
+      })
+      
       return Response.redirect(new URL(`/order?${params.toString()}`, request.url), 302)
     }
 
   } catch (error) {
     console.error('Payment confirmation error:', error)
-    return NextResponse.redirect(new URL('/order?error=payment_failed', request.url))
+    
+    // 에러 메시지 추출
+    let errorMessage = '결제 처리 중 오류가 발생했습니다.'
+    if (error instanceof Error) {
+      errorMessage = error.message
+    } else if (typeof error === 'string') {
+      errorMessage = error
+    }
+    
+    const params = new URLSearchParams({
+      error: 'payment_failed',
+      reason: errorMessage.slice(0, 200)
+    })
+    
+    console.warn('[Toss] catch block redirecting with params:', {
+      params: params.toString(),
+      errorMessage: errorMessage,
+      redirectUrl: `/order?${params.toString()}`,
+      timestamp: new Date().toISOString()
+    })
+    
+    return NextResponse.redirect(new URL(`/order?${params.toString()}`, request.url), 302)
   }
 }
