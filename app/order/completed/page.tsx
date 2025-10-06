@@ -12,7 +12,7 @@ export default function OrderCompletedPage() {
   return (
     <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-sm p-8 text-center">
+        <div className="bg-white rounded-2xl shadow-sm p-8 text-center animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
           {/* Success Icon */}
           <div className="mb-6">
             <div className="w-16 h-16 bg-gradient-to-br from-[#13C2C2] to-[#0FA8A8] rounded-full flex items-center justify-center mx-auto mb-4">
@@ -21,11 +21,11 @@ export default function OrderCompletedPage() {
             
             {/* Success Message */}
             <h1 className="text-3xl font-semibold tracking-tight text-gray-900 mb-2">
-              결제가 완료되었습니다!
+              🎉 결제가 완료되었습니다!
             </h1>
-            <p className="text-gray-600 text-sm">
+            <p className="text-gray-600 text-sm leading-relaxed">
               주문과 결제가 성공적으로 완료되었습니다.<br />
-              세탁물을 안전하게 수거하여 깨끗하게 세탁해드리겠습니다.
+              <span className="font-medium text-[#13C2C2]">세탁물을 안전하게 수거하여 깨끗하게 세탁해드리겠습니다.</span>
             </p>
           </div>
 

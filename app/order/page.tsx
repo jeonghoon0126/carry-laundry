@@ -68,20 +68,26 @@ function OrderPageContent() {
 
         {/* 결제 실패 에러 메시지 */}
         {showError && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center gap-2">
-              <span className="text-red-600">⚠️</span>
-              <div className="flex-1">
-                <p className="text-red-800 font-medium">결제에 실패했습니다</p>
-                <p className="text-red-600 text-sm mt-1">{errorMessage}</p>
-                <p className="text-red-500 text-xs mt-1">다시 시도해주세요</p>
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg animate-in slide-in-from-top-2 duration-300">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                  <span className="text-red-600 text-sm">⚠️</span>
+                </div>
               </div>
-              <button
-                onClick={() => setShowError(false)}
-                className="ml-auto text-red-400 hover:text-red-600 p-1"
-              >
-                ✕
-              </button>
+              <div className="flex-1">
+                <p className="text-red-800 font-medium mb-1">결제에 실패했습니다</p>
+                <p className="text-red-600 text-sm mb-2 leading-relaxed">{errorMessage}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-red-500 text-xs">다시 시도해주세요</p>
+                  <button
+                    onClick={() => setShowError(false)}
+                    className="text-red-400 hover:text-red-600 text-xs underline ml-auto"
+                  >
+                    닫기
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}

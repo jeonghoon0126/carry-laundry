@@ -8,6 +8,9 @@ type Order = {
   phone: string
   address: string
   created_at: string
+  paid: boolean
+  payment_amount: number | null
+  payment_id: string | null
   profiles?: {
     name: string | null
     email: string | null
@@ -16,7 +19,11 @@ type Order = {
 
 type AdminStats = {
   totalOrders: number
+  paidOrders: number
+  unpaidOrders: number
+  totalRevenue: number
   distinctUsers: number
+  todayOrders: number
 }
 
 export default function AdminPage() {
@@ -35,8 +42,25 @@ export default function AdminPage() {
       
       // Calculate stats
       const totalOrders = data.length
+      const paidOrders = data.filter((order: Order) => order.paid === true).length
+      const unpaidOrders = data.filter((order: Order) => order.paid !== true).length
+      const totalRevenue = data
+        .filter((order: Order) => order.paid === true && order.payment_amount)
+        .reduce((sum: number, order: Order) => sum + (order.payment_amount || 0), 0)
       const distinctUsers = new Set(data.map((order: Order) => order.user_id).filter(Boolean)).size
-      setStats({ totalOrders, distinctUsers })
+      const today = new Date().toDateString()
+      const todayOrders = data.filter((order: Order) => 
+        new Date(order.created_at).toDateString() === today
+      ).length
+      
+      setStats({ 
+        totalOrders, 
+        paidOrders, 
+        unpaidOrders, 
+        totalRevenue, 
+        distinctUsers, 
+        todayOrders 
+      })
     } catch (e:any) {
       console.error(e)
       setError('데이터 로드 실패')
@@ -60,14 +84,30 @@ export default function AdminPage() {
       
       {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
           <div className="bg-blue-50 p-4 rounded-lg">
-            <h3 className="font-semibold text-blue-900">총 주문 수</h3>
+            <h3 className="font-semibold text-blue-900 text-sm">총 주문</h3>
             <p className="text-2xl font-bold text-blue-600">{stats.totalOrders}</p>
           </div>
           <div className="bg-green-50 p-4 rounded-lg">
-            <h3 className="font-semibold text-green-900">가입 사용자 수</h3>
-            <p className="text-2xl font-bold text-green-600">{stats.distinctUsers}</p>
+            <h3 className="font-semibold text-green-900 text-sm">결제완료</h3>
+            <p className="text-2xl font-bold text-green-600">{stats.paidOrders}</p>
+          </div>
+          <div className="bg-red-50 p-4 rounded-lg">
+            <h3 className="font-semibold text-red-900 text-sm">미결제</h3>
+            <p className="text-2xl font-bold text-red-600">{stats.unpaidOrders}</p>
+          </div>
+          <div className="bg-purple-50 p-4 rounded-lg">
+            <h3 className="font-semibold text-purple-900 text-sm">총 매출</h3>
+            <p className="text-2xl font-bold text-purple-600">{stats.totalRevenue.toLocaleString()}원</p>
+          </div>
+          <div className="bg-orange-50 p-4 rounded-lg">
+            <h3 className="font-semibold text-orange-900 text-sm">가입 사용자</h3>
+            <p className="text-2xl font-bold text-orange-600">{stats.distinctUsers}</p>
+          </div>
+          <div className="bg-cyan-50 p-4 rounded-lg">
+            <h3 className="font-semibold text-cyan-900 text-sm">오늘 주문</h3>
+            <p className="text-2xl font-bold text-cyan-600">{stats.todayOrders}</p>
           </div>
         </div>
       )}
@@ -88,6 +128,8 @@ export default function AdminPage() {
               <th className="p-2 border-b">이름</th>
               <th className="p-2 border-b">전화</th>
               <th className="p-2 border-b">주소</th>
+              <th className="p-2 border-b">결제상태</th>
+              <th className="p-2 border-b">결제금액</th>
             </tr>
           </thead>
           <tbody>
@@ -104,6 +146,18 @@ export default function AdminPage() {
                 <td className="p-2">{o.name}</td>
                 <td className="p-2">{o.phone}</td>
                 <td className="p-2">{o.address}</td>
+                <td className="p-2">
+                  <span className={`px-2 py-1 rounded text-xs ${
+                    o.paid === true 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {o.paid === true ? '결제완료' : '미결제'}
+                  </span>
+                </td>
+                <td className="p-2 text-right">
+                  {o.payment_amount ? `${o.payment_amount.toLocaleString()}원` : '-'}
+                </td>
               </tr>
             ))}
           </tbody>

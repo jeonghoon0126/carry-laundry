@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { logger } from '@/lib/logger'
 
 // 빌드 시점 모듈 평가를 피하기 위해 핸들러 내부에서 Supabase 클라이언트를 생성하도록 변경.
 export const dynamic = 'force-dynamic';
@@ -27,12 +28,12 @@ export async function GET(request: NextRequest) {
     const supabase = getSupabaseServerClient(); // <-- 핸들러 내부에서 생성
     
     // Log incoming request
-    console.info('[Toss] confirm-in', {
+    logger.info('Payment confirmation request received', {
       url: request.url,
       method: request.method,
       userAgent: request.headers.get('user-agent'),
       referer: request.headers.get('referer'),
-      timestamp: new Date().toISOString()
+      endpoint: '/api/payments/confirm'
     })
 
     // Extract query parameters
@@ -159,6 +160,12 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(new URL(`/order?${params.toString()}`, request.url));
       }
 
+      logger.paymentCompleted(orderId, amount, paymentKey, {
+        method: body?.method,
+        totalAmount: body?.totalAmount,
+        endpoint: '/api/payments/confirm'
+      })
+      
       return Response.redirect(new URL('/order/completed', request.url), 302)
     } else {
       // Use the already parsed body or raw text
@@ -174,12 +181,11 @@ export async function GET(request: NextRequest) {
         reason = `결제 확인 실패 (HTTP ${tossRes.status})`
       }
       
-      console.warn('[Toss] confirm-fail', { 
-        status: tossRes.status, 
+      logger.paymentFailed(orderId, reason, {
+        status: tossRes.status,
         body: body || raw,
-        reason: reason,
         paymentKey: paymentKey?.slice(0, 10) + '...',
-        orderId: orderId
+        endpoint: '/api/payments/confirm'
       })
       
       const params = new URLSearchParams({
@@ -199,7 +205,9 @@ export async function GET(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error('Payment confirmation error:', error)
+    logger.apiError('/api/payments/confirm', error, {
+      endpoint: '/api/payments/confirm'
+    })
     
     // 에러 메시지 추출
     let errorMessage = '결제 처리 중 오류가 발생했습니다.'

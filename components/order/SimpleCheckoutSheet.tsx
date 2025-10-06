@@ -367,7 +367,14 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
               : "bg-[#13C2C2] text-white hover:brightness-95"
           )}
         >
-          {isSubmitting ? "결제 중..." : "주문하기"}
+          {isSubmitting ? (
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              결제 진행 중...
+            </div>
+          ) : (
+            "주문하기"
+          )}
         </Button>
       </div>
     </div>
