@@ -30,7 +30,8 @@ export async function GET(request: NextRequest) {
     console.info('[Toss] confirm-in', {
       url: request.url,
       method: request.method,
-      headers: Object.fromEntries(request.headers.entries())
+      userAgent: request.headers.get('user-agent'),
+      referer: request.headers.get('referer')
     })
 
     // Extract query parameters

@@ -164,20 +164,40 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
         throw new Error('Toss Payments가 로드되지 않았습니다.');
       }
 
-      console.log('Calling TossPayments.requestPayment...');
-      
-      await tossPayments.requestPayment('카드', {
+      console.log('Calling TossPayments.requestPayment...', {
         amount,
         orderId,
         orderName,
         customerName,
         customerEmail,
         successUrl,
-        failUrl,
-      })
+        failUrl
+      });
+      
+      try {
+        await tossPayments.requestPayment('카드', {
+          amount,
+          orderId,
+          orderName,
+          customerName,
+          customerEmail,
+          successUrl,
+          failUrl,
+        });
+        console.log('TossPayments.requestPayment completed successfully');
+      } catch (tossError) {
+        console.error('TossPayments.requestPayment failed:', tossError);
+        throw tossError;
+      }
     } catch (err) {
       console.error("Payment error", err);
-      router.push('/order?error=payment_failed');
+      const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
+      console.error('Payment error details:', {
+        error: err,
+        message: errorMessage,
+        stack: err instanceof Error ? err.stack : undefined
+      });
+      router.push(`/order?error=payment_failed&reason=${encodeURIComponent(errorMessage)}`);
     } finally {
       setIsSubmitting(false);
     }

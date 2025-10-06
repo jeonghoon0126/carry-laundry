@@ -17,11 +17,14 @@ function OrderPageContent() {
   useEffect(() => {
     // 결제 실패 에러 체크
     const error = searchParams.get('error');
+    const reason = searchParams.get('reason');
     if (error === 'payment_failed') {
       setShowError(true);
+      console.error('Payment failed:', { error, reason });
       // URL에서 에러 파라미터 제거
       const url = new URL(window.location.href);
       url.searchParams.delete('error');
+      url.searchParams.delete('reason');
       window.history.replaceState({}, '', url.toString());
     }
   }, [searchParams]);
