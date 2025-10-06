@@ -2,32 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { MapPin, MessageSquare, CreditCard } from 'lucide-react'
+import { MapPin, MessageSquare } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import { cn } from '@/lib/utils'
 import type { AddressCore } from '@/lib/addresses'
 
-interface PaymentMethod {
-  id: string
-  name: string
-  description: string
-  default?: boolean
-}
-
-const PAYMENT_METHODS: PaymentMethod[] = [
-  { 
-    id: 'toss', 
-    name: '토스 간편결제', 
-    description: '빠르고 안전한 결제',
-    default: true
-  },
-  { 
-    id: 'card', 
-    name: '카드결제', 
-    description: '일반 카드 결제'
-  },
-]
 
 interface SimpleCheckoutSheetProps {
   isLoading?: boolean
@@ -41,7 +21,7 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
   const [name, setName] = useState<string>('')
   const [phone, setPhone] = useState<string>('')
   const [address, setAddress] = useState<string>('')
-  const [paymentMethod, setPaymentMethod] = useState<string>('toss')
+  const [quantity, setQuantity] = useState<number>(1)
   const [specialRequests, setSpecialRequests] = useState<string>('')
   const [tossPaymentsError, setTossPaymentsError] = useState<string>('')
   const [isTossScriptLoaded, setIsTossScriptLoaded] = useState(false)
@@ -121,6 +101,7 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
           name,
           phone,
           address: shippingAddress?.address1 || address,
+          quantity,
           specialRequests,
           shippingAddress: shippingAddress ? {
             addressDetail: shippingAddress.addressDetail,
@@ -147,8 +128,8 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
       console.log('Starting Toss payment process...')
       
       const orderId = `order_${orderResult.id}_${Date.now()}`
-      const amount = Number(orderResult.amount || 11900)
-      const orderName = '세탁 주문 1건'
+      const amount = Number(orderResult.amount || (10000 * quantity + 1900))
+      const orderName = `세탁 주문 ${quantity}건`
       const customerName = name
       const customerEmail = 'customer@example.com'
       
@@ -281,6 +262,39 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
         </div>
       )}
 
+      {/* Quantity Selector */}
+      <div className="rounded-2xl bg-white shadow-sm p-4">
+        <label className="block text-sm font-medium text-gray-900 mb-3">
+          세탁 수량
+        </label>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+              className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:border-[#13C2C2] hover:text-[#13C2C2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={quantity <= 1}
+            >
+              <span className="text-lg font-medium">−</span>
+            </button>
+            <div className="w-16 text-center">
+              <span className="text-2xl font-semibold text-gray-900">{quantity}</span>
+            </div>
+            <button
+              onClick={() => setQuantity(quantity + 1)}
+              className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:border-[#13C2C2] hover:text-[#13C2C2] transition-colors"
+            >
+              <span className="text-lg font-medium">+</span>
+            </button>
+          </div>
+          <div className="text-right">
+            <div className="text-sm text-gray-500">세탁물 {quantity}건</div>
+            <div className="text-lg font-semibold text-gray-900">
+              {(10000 * quantity).toLocaleString()}원
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Special Requests */}
       <div className="rounded-2xl bg-white shadow-sm p-4">
         <div className="flex items-center gap-2 mb-3">
@@ -296,60 +310,35 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
         />
       </div>
 
-      {/* Payment Method */}
-      <div className="rounded-2xl bg-white shadow-sm p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <CreditCard className="w-5 h-5 text-[#13C2C2]" />
-          <h3 className="font-medium text-gray-900">결제 수단</h3>
-        </div>
-        <div className="space-y-2">
-          {PAYMENT_METHODS.map((method) => (
-            <label
-              key={method.id}
-              className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                paymentMethod === method.id
-                  ? 'border-[#13C2C2] bg-[#13C2C2]/10'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <input
-                type="radio"
-                name="payment"
-                value={method.id}
-                checked={paymentMethod === method.id}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-4 h-4 text-[#13C2C2]"
-              />
-              <div className="flex-1">
-                <div className="font-medium text-gray-900">{method.name}</div>
-                <div className="text-sm text-gray-500">{method.description}</div>
-              </div>
-              {method.default && (
-                <span className="text-xs bg-[#13C2C2]/10 text-[#13C2C2] px-2 py-1 rounded-full">
-                  기본
-                </span>
-              )}
-            </label>
-          ))}
-        </div>
-      </div>
 
       {/* Order Summary */}
       <div className="rounded-2xl bg-white shadow-sm p-4">
         <h3 className="font-medium text-gray-900 mb-3">주문 요약</h3>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-gray-600">세탁 서비스</span>
-            <span className="text-gray-900">10,000원</span>
+            <span className="text-gray-600">세탁 서비스 ({quantity}건)</span>
+            <span className="text-gray-900">{(10000 * quantity).toLocaleString()}원</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600">배달비</span>
-            <span className="text-gray-900">1,900원</span>
+          <div className="flex justify-between items-center">
+            <div>
+              <span className="text-gray-600">배달비</span>
+              <span className="ml-2 text-xs text-red-500 line-through">3,000원</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">할인</span>
+              <span className="text-gray-900">1,900원</span>
+            </div>
+          </div>
+          <div className="bg-green-50 border border-green-200 rounded-lg p-2 mt-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-green-700">🎉 신규 고객 할인 적용</span>
+              <span className="text-green-600 font-medium">1,100원 할인</span>
+            </div>
           </div>
           <div className="border-t border-gray-200 pt-2 mt-2">
             <div className="flex justify-between font-semibold">
               <span className="text-gray-900">총 결제금액</span>
-              <span className="text-gray-900">11,900원</span>
+              <span className="text-gray-900">{(10000 * quantity + 1900).toLocaleString()}원</span>
             </div>
           </div>
         </div>
