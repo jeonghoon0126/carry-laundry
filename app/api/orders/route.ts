@@ -138,7 +138,9 @@ export async function POST(request: Request) {
         dong,
         lat,
         lng,
-        is_serviceable: true
+        is_serviceable: true,
+        paid: false,
+        payment_amount: 0
       })
       .select()
       .single()

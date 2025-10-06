@@ -161,12 +161,12 @@ export default function OrderHistory() {
                       #{order.id}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge variant={order.paid ? 'success' : 'danger'}>
-                        {order.paid ? '결제완료' : '미결제/실패'}
+                      <Badge variant={order.paid === true ? 'success' : 'danger'}>
+                        {order.paid === true ? '결제완료' : '미결제/실패'}
                       </Badge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                      <span className={order.paid ? "text-gray-900 font-semibold" : "text-gray-500"}>
+                      <span className={order.paid === true ? "text-gray-900 font-semibold" : "text-gray-500"}>
                         {order.payment_amount ? order.payment_amount.toLocaleString("ko-KR") + "원" : "-"}
                       </span>
                     </td>
@@ -193,14 +193,14 @@ export default function OrderHistory() {
                 <div>
                   <div className="text-xs text-gray-500 mb-1">결제상태</div>
                   <div>
-                    <Badge variant={order.paid ? 'success' : 'danger'}>
-                      {order.paid ? '결제완료' : '미결제/실패'}
+                    <Badge variant={order.paid === true ? 'success' : 'danger'}>
+                      {order.paid === true ? '결제완료' : '미결제/실패'}
                     </Badge>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-xs text-gray-500 mb-1">결제금액</div>
-                  <div className={`text-sm ${order.paid ? "text-gray-900 font-semibold" : "text-gray-500"}`}>
+                  <div className={`text-sm ${order.paid === true ? "text-gray-900 font-semibold" : "text-gray-500"}`}>
                     {order.payment_amount ? order.payment_amount.toLocaleString("ko-KR") + "원" : "-"}
                   </div>
                 </div>
