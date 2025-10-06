@@ -186,6 +186,16 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
         </div>
       )}
 
+      {/* 환경변수 체크 (개발용) */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="rounded-2xl bg-yellow-50 border border-yellow-200 p-4 text-sm">
+          <p><strong>개발 환경 체크:</strong></p>
+          <p>• Toss 클라이언트 키: {process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ? '✅ 설정됨' : '❌ 없음'}</p>
+          <p>• Toss 스크립트 로드: {isTossScriptLoaded ? '✅ 완료' : '❌ 대기중'}</p>
+          <p>• 결제 준비: {!isDisabled ? '✅ 준비됨' : '❌ 미완료'}</p>
+        </div>
+      )}
+
 
 
       {/* Name Input */}
