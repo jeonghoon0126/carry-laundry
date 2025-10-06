@@ -45,6 +45,7 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
   const [specialRequests, setSpecialRequests] = useState<string>('')
   const [tossPaymentsError, setTossPaymentsError] = useState<string>('')
   const [isTossScriptLoaded, setIsTossScriptLoaded] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Dynamically load Toss Payments script
   useEffect(() => {
