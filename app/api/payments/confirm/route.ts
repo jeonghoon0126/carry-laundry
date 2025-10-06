@@ -21,7 +21,9 @@ export async function GET(request: NextRequest) {
     
     // Log incoming request
     console.info('[Toss] confirm-in', {
-      url: request.url
+      url: request.url,
+      method: request.method,
+      headers: Object.fromEntries(request.headers.entries())
     })
 
     // Extract query parameters
@@ -113,7 +115,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(new URL("/order/completed", request.url));
       }
 
-      const { error: upErr } = await supabase
+      const { error: upErr, data: updateData } = await supabase
         .from("orders")
         .update({
           paid: true,
@@ -121,9 +123,20 @@ export async function GET(request: NextRequest) {
           payment_amount: body?.totalAmount || amount,
         })
         .eq("id", dbId)
-        .eq("paid", false);
+        .eq("paid", false)
+        .select();
 
-      if (upErr) console.error("Update failed", upErr);
+      console.info('[Toss] Update result:', { 
+        dbId, 
+        error: upErr, 
+        updatedRows: updateData?.length || 0,
+        updateData 
+      });
+
+      if (upErr) {
+        console.error("Update failed", upErr);
+        return NextResponse.redirect(new URL('/order?error=payment_failed', request.url));
+      }
 
       return Response.redirect(new URL('/order/completed', request.url), 302)
     } else {
