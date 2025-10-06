@@ -120,7 +120,7 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
         body: JSON.stringify({
           name,
           phone,
-          address,
+          address: shippingAddress?.address1 || address,
           specialRequests,
           shippingAddress: shippingAddress ? {
             addressDetail: shippingAddress.addressDetail,
@@ -131,6 +131,12 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
       })
 
       if (!orderResponse.ok) {
+        const errorText = await orderResponse.text()
+        console.error('Order creation failed:', {
+          status: orderResponse.status,
+          statusText: orderResponse.statusText,
+          body: errorText
+        })
         throw new Error('주문 생성에 실패했습니다.')
       }
 
