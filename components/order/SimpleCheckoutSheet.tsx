@@ -58,9 +58,14 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
         }
         
         const { loadTossPayments } = await import('@tosspayments/payment-sdk')
-        await loadTossPayments(clientKey)
+        const tossPayments = await loadTossPayments(clientKey)
+        
+        // 전역 객체에 저장
+        if (typeof window !== 'undefined') {
+          (window as any).TossPayments = tossPayments;
+        }
         setIsTossScriptLoaded(true)
-        console.log('Toss Payments loaded successfully')
+        console.log('Toss Payments loaded successfully', tossPayments)
       } catch (error) {
         console.error('Failed to load Toss Payments:', error)
         setTossPaymentsError('결제 시스템을 불러올 수 없습니다.')
@@ -149,9 +154,12 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
       // Toss Payments 위젯 열기
       const tossPayments = (window as any).TossPayments;
       if (!tossPayments) {
+        console.error('TossPayments not found on window object');
         throw new Error('Toss Payments가 로드되지 않았습니다.');
       }
 
+      console.log('Calling TossPayments.requestPayment...');
+      
       await tossPayments.requestPayment('카드', {
         amount,
         orderId,
