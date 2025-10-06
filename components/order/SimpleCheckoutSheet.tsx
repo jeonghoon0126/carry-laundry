@@ -178,13 +178,6 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
         </div>
       )}
 
-      {/* Debug Info */}
-      <div className="rounded-2xl bg-blue-50 border border-blue-200 p-4 text-sm">
-        <p><strong>디버그 정보:</strong></p>
-        <p>• Toss 스크립트 로드됨: {isTossScriptLoaded ? '✅' : '❌'}</p>
-        <p>• 클라이언트 키: {process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ? '설정됨' : '❌ 없음'}</p>
-        <p>• 결제 준비 상태: {!isDisabled ? '✅' : '❌'}</p>
-      </div>
 
 
       {/* Name Input */}
