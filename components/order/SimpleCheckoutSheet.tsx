@@ -49,20 +49,27 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
 
   // Dynamically load Toss Payments script
   useEffect(() => {
-    if (paymentMethod === 'toss') {
-      const loadTossPayments = async () => {
-        try {
-          const { loadTossPayments } = await import('@tosspayments/payment-sdk')
-          await loadTossPayments(process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || '')
-          setIsTossScriptLoaded(true)
-        } catch (error) {
-          console.error('Failed to load Toss Payments:', error)
-          setTossPaymentsError('결제 시스템을 불러올 수 없습니다.')
+    const loadTossPayments = async () => {
+      try {
+        const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
+        if (!clientKey) {
+          setTossPaymentsError('Toss Payments 클라이언트 키가 설정되지 않았습니다.');
+          return;
         }
+        
+        const { loadTossPayments } = await import('@tosspayments/payment-sdk')
+        await loadTossPayments(clientKey)
+        setIsTossScriptLoaded(true)
+        console.log('Toss Payments loaded successfully')
+      } catch (error) {
+        console.error('Failed to load Toss Payments:', error)
+        setTossPaymentsError('결제 시스템을 불러올 수 없습니다.')
       }
-      loadTossPayments()
     }
-  }, [paymentMethod])
+    
+    // 컴포넌트 마운트 시 즉시 로드
+    loadTossPayments()
+  }, [])
 
   if (isLoading) {
     return (
@@ -125,32 +132,35 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
       const orderResult = await orderResponse.json()
       console.log('Order created:', orderResult)
 
-      if (paymentMethod === 'toss') {
-        // Load Toss Payments and process payment
-        const { loadTossPayments } = await import('@tosspayments/payment-sdk')
-        const tossPayments = await loadTossPayments(process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || '')
-        
-        const orderId = `order_${orderResult.id}_${Date.now()}`
-        const amount = Number(orderResult.amount || 11900)
-        const orderName = '세탁 주문 1건'
-        const customerName = name
-        const customerEmail = 'customer@example.com'
-        
-        const successUrl = `${window.location.origin}/api/payments/confirm`
-        const failUrl = `${window.location.origin}/order?error=payment_failed`
+      // 모든 결제수단은 Toss로 처리
+      console.log('Starting Toss payment process...')
+      
+      const orderId = `order_${orderResult.id}_${Date.now()}`
+      const amount = Number(orderResult.amount || 11900)
+      const orderName = '세탁 주문 1건'
+      const customerName = name
+      const customerEmail = 'customer@example.com'
+      
+      const successUrl = `${window.location.origin}/api/payments/confirm`
+      const failUrl = `${window.location.origin}/order?error=payment_failed`
 
-        console.info('[Toss] Opening widget', { orderId, orderName, amount, successUrl, failUrl })
+      console.info('[Toss] Opening widget', { orderId, orderName, amount, successUrl, failUrl })
 
-        await tossPayments.requestPayment('카드', {
-          amount,
-          orderId,
-          orderName,
-          customerName,
-          customerEmail,
-          successUrl,
-          failUrl,
-        })
+      // Toss Payments 위젯 열기
+      const tossPayments = (window as any).TossPayments;
+      if (!tossPayments) {
+        throw new Error('Toss Payments가 로드되지 않았습니다.');
       }
+
+      await tossPayments.requestPayment('카드', {
+        amount,
+        orderId,
+        orderName,
+        customerName,
+        customerEmail,
+        successUrl,
+        failUrl,
+      })
     } catch (err) {
       console.error("Payment error", err);
       router.push('/order?error=payment_failed');
@@ -167,6 +177,14 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
           <Badge variant="danger">{tossPaymentsError}</Badge>
         </div>
       )}
+
+      {/* Debug Info */}
+      <div className="rounded-2xl bg-blue-50 border border-blue-200 p-4 text-sm">
+        <p><strong>디버그 정보:</strong></p>
+        <p>• Toss 스크립트 로드됨: {isTossScriptLoaded ? '✅' : '❌'}</p>
+        <p>• 클라이언트 키: {process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ? '설정됨' : '❌ 없음'}</p>
+        <p>• 결제 준비 상태: {!isDisabled ? '✅' : '❌'}</p>
+      </div>
 
 
       {/* Name Input */}
