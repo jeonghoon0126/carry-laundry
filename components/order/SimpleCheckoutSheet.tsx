@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, MapPin, MessageSquare, CreditCard } from 'lucide-react'
+import { MapPin, MessageSquare, CreditCard } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import type { AddressCore } from '@/lib/addresses'
@@ -143,16 +143,6 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex items-center gap-3 py-3">
-        <button
-          onClick={() => router.back()}
-          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <h1 className="text-xl font-semibold">세탁 주문</h1>
-      </div>
 
       {/* Name Input */}
       <div className="rounded-2xl bg-white shadow-sm p-4">
