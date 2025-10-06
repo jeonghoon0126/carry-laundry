@@ -1,45 +1,36 @@
 "use client";
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import AddressSection from "@/components/order/AddressSection";
 import SimpleCheckoutSheet from "@/components/order/SimpleCheckoutSheet";
 import type { AddressCore } from "@/lib/addresses";
 
-export default function OrderPage() {
-  const router = useRouter();
-  const [shippingAddress, setShippingAddress] = useState<AddressCore | null>(null);
-  
-  // ✅ 이 페이지에서는 isSubmitting을 절대 사용하지 않습니다.
-  //    SimpleCheckoutSheet 내부에서만 관리합니다.
-  
-  return (
-    <main className="min-h-[100dvh] bg-gray-50">
-      <div className="mx-auto w-full max-w-[680px] px-4 py-6 space-y-4">
-        {/* Top Navigation */}
-        <div className="flex items-center gap-3 py-3">
-          <button
-            onClick={() => router.back()}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-xl font-semibold">세탁 주문</h1>
-        </div>
+// Prevent Next.js from trying to prerender this page at build time.
+export const dynamic = "force-dynamic";
 
-        {/* 페이지 타이틀 */}
+export default function OrderPage() {
+  // This page must NOT reference isSubmitting. That state lives inside SimpleCheckoutSheet.
+  const [shippingAddress, setShippingAddress] = useState<AddressCore | null>(null);
+
+  useEffect(() => {
+    // 페이지 진입 시 필요한 초기화가 있다면 여기서 처리
+  }, []);
+
+  return (
+    <main className="min-h-[100dvh] w-full bg-gray-50 px-4 py-6">
+      <div className="mx-auto w-full max-w-[720px]">
+        {/* Title */}
         <h1 className="text-2xl font-semibold mb-4">세탁 주문</h1>
-        {/* 배송지 정보 섹션 (타이틀 바로 아래) */}
+
+        {/* Address section directly under the title */}
         <AddressSection
           value={shippingAddress}
           onChange={(addr) => setShippingAddress(addr)}
           className="mb-4"
         />
-        {/* 체크아웃 시트 */}
+
+        {/* Checkout Sheet (handles its own submitting state) */}
         <SimpleCheckoutSheet shippingAddress={shippingAddress} />
       </div>
     </main>
   );
 }
-
-// ✅ 주의: page.tsx에서 isSubmitting / isDisabled를 계산하거나 프롭으로 넘기던 코드가 있었다면 전부 제거되었습니다.
