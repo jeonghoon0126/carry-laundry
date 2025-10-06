@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import { cn } from '@/lib/utils'
 import type { AddressCore } from '@/lib/addresses'
+import { generateNicknameWithNumber } from '@/lib/utils/nickname'
 
 
 interface SimpleCheckoutSheetProps {
@@ -18,7 +19,7 @@ interface SimpleCheckoutSheetProps {
 
 export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress, hideAddressInput = true }: SimpleCheckoutSheetProps) {
   const router = useRouter()
-  const [name, setName] = useState<string>('')
+  const [name, setName] = useState<string>(generateNicknameWithNumber())
   const [phone, setPhone] = useState<string>('')
   const [address, setAddress] = useState<string>('')
   const [quantity, setQuantity] = useState<number>(1)
@@ -26,6 +27,36 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
   const [tossPaymentsError, setTossPaymentsError] = useState<string>('')
   const [isTossScriptLoaded, setIsTossScriptLoaded] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  // 동의 체크박스 상태
+  const [mainAgreement, setMainAgreement] = useState<boolean>(false)
+  const [privacyCollection, setPrivacyCollection] = useState<boolean>(false)
+  const [privacyThirdParty, setPrivacyThirdParty] = useState<boolean>(false)
+
+  // 전화번호 로컬 스토리지에서 불러오기
+  useEffect(() => {
+    const savedPhone = localStorage.getItem('carry-laundry-phone')
+    if (savedPhone) {
+      setPhone(savedPhone)
+    }
+  }, [])
+
+  // 전화번호 변경 시 로컬 스토리지에 저장
+  const handlePhoneChange = (value: string) => {
+    setPhone(value)
+    if (value.trim()) {
+      localStorage.setItem('carry-laundry-phone', value)
+    }
+  }
+
+  // 메인 동의 체크박스 핸들러
+  const handleMainAgreement = (checked: boolean) => {
+    setMainAgreement(checked)
+    if (checked) {
+      setPrivacyCollection(true)
+      setPrivacyThirdParty(true)
+    }
+  }
 
   // Dynamically load Toss Payments script
   useEffect(() => {
@@ -67,12 +98,13 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
     )
   }
 
-  // CTA 활성화 조건: 이름/전화/주소 3개만 만족하면 활성화, 상태는 렌더마다 즉시 반영
+  // CTA 활성화 조건: 이름/전화/주소/동의 체크박스 만족해야 활성화
   const isDisabled =
     isSubmitting ||
     !name?.trim() ||
     !/^01[0-9]-?\d{3,4}-?\d{4}$/.test(phone || "") ||
-    !shippingAddress?.address1?.trim();
+    !shippingAddress?.address1?.trim() ||
+    !mainAgreement;
 
   const handlePayment = async () => {
     try {
@@ -103,6 +135,11 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
           address: shippingAddress?.address1 || address,
           quantity,
           specialRequests,
+          agreements: {
+            mainAgreement,
+            privacyCollection,
+            privacyThirdParty
+          },
           shippingAddress: shippingAddress ? {
             addressDetail: shippingAddress.addressDetail,
             entranceMethod: shippingAddress.entranceMethod,
@@ -128,7 +165,7 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
       console.log('Starting Toss payment process...')
       
       const orderId = `order_${orderResult.id}_${Date.now()}`
-      const amount = Number(orderResult.amount || (10000 * quantity + 1900))
+      const amount = Number(orderResult.amount || (11900 * quantity))
       const orderName = `세탁 주문 ${quantity}건`
       const customerName = name
       const customerEmail = 'customer@example.com'
@@ -217,18 +254,23 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
 
 
 
-      {/* Name Input */}
+      {/* Customer Info */}
       <div className="rounded-2xl bg-white shadow-sm p-4">
         <label className="block text-sm font-medium text-gray-900 mb-2">
-          이름
+          고객 정보
         </label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="이름을 입력해주세요"
-          className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#13C2C2] focus:border-transparent"
-        />
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div>
+            <div className="text-sm text-gray-600">닉네임</div>
+            <div className="font-medium text-gray-900">{name}</div>
+          </div>
+          <button
+            onClick={() => setName(generateNicknameWithNumber())}
+            className="text-sm text-[#13C2C2] hover:text-[#0FA8A8] underline"
+          >
+            닉네임 변경
+          </button>
+        </div>
       </div>
 
       {/* Phone Input */}
@@ -239,7 +281,7 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
         <input
           type="tel"
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          onChange={(e) => handlePhoneChange(e.target.value)}
           placeholder="010-1234-5678"
           className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#13C2C2] focus:border-transparent"
         />
@@ -289,7 +331,7 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
           <div className="text-right">
             <div className="text-sm text-gray-500">세탁물 {quantity}건</div>
             <div className="text-lg font-semibold text-gray-900">
-              {(10000 * quantity).toLocaleString()}원
+              {(11900 * quantity).toLocaleString()}원
             </div>
           </div>
         </div>
@@ -310,6 +352,111 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
         />
       </div>
 
+      {/* Agreement Checkboxes */}
+      <div className="rounded-2xl bg-white shadow-sm p-4">
+        <div className="space-y-4">
+          {/* Main Agreement */}
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={mainAgreement}
+              onChange={(e) => handleMainAgreement(e.target.checked)}
+              className="w-5 h-5 text-[#13C2C2] border-gray-300 rounded focus:ring-[#13C2C2] mt-0.5"
+            />
+            <div className="flex-1">
+              <div className="text-sm font-medium text-gray-900">
+                주문 내용을 확인하였으며, 정보 제공 등에 동의합니다.
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                여기에 동의하면 아래 2개 문장에 자동으로 동의됩니다.
+              </div>
+            </div>
+          </label>
+
+          {/* Sub Agreements */}
+          <div className="ml-8 space-y-3">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={privacyCollection}
+                onChange={(e) => setPrivacyCollection(e.target.checked)}
+                className="w-4 h-4 text-[#13C2C2] border-gray-300 rounded focus:ring-[#13C2C2] mt-0.5"
+              />
+              <div className="text-sm text-gray-700">
+                <span className="text-red-500">(필수)</span> 개인정보 수집 / 이용 동의
+              </div>
+            </label>
+
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={privacyThirdParty}
+                onChange={(e) => setPrivacyThirdParty(e.target.checked)}
+                className="w-4 h-4 text-[#13C2C2] border-gray-300 rounded focus:ring-[#13C2C2] mt-0.5"
+              />
+              <div className="text-sm text-gray-700">
+                <span className="text-red-500">(필수)</span> 개인정보 제3자 제공 동의
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+
+      {/* Delivery Guide */}
+      <div className="rounded-2xl bg-blue-50 border border-blue-200 p-4">
+        <h3 className="font-semibold text-blue-900 mb-4 text-lg">📦 수거/배송 안내</h3>
+        
+        <div className="space-y-4">
+          {/* 수거 안내 */}
+          <div className="bg-white rounded-lg p-3 border border-blue-100">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg">🚚</span>
+              <span className="font-semibold text-blue-900">수거안내</span>
+            </div>
+            <p className="text-sm text-blue-800 font-medium">
+              익일 오전 9시까지 문 앞에 놓기만 하면 끝!
+            </p>
+          </div>
+
+          {/* 배송 안내 */}
+          <div className="bg-white rounded-lg p-3 border border-blue-100">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg">📬</span>
+              <span className="font-semibold text-blue-900">배송안내</span>
+            </div>
+            <p className="text-sm text-blue-800 font-medium">
+              익일 오후 11시안에 배송돼요!
+            </p>
+          </div>
+
+          {/* 수거 실패 안내 */}
+          <div className="bg-white rounded-lg p-3 border border-blue-100">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg">⚠️</span>
+              <span className="font-semibold text-blue-900">수거 실패 안내</span>
+            </div>
+            <p className="text-sm text-blue-800">
+              비닐에 담겨있지 않거나 출입 방법 미기재로 수거 실패 시 익일 오전에 다시 수거해드릴 수 있어요. 캐리 팀에서 고객님께 따로 안내를 드려요.
+            </p>
+          </div>
+
+          {/* 주의사항 */}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg">📋</span>
+              <span className="font-semibold text-yellow-900">꼭 확인해주세요</span>
+            </div>
+            <ul className="text-xs text-yellow-800 space-y-1">
+              <li>• 세탁물을 가능한 1개의 비닐에 담아 겉면 혹은 포스트잇에 '세탁'을 표기해주세요</li>
+              <li>• 한 번에 세탁 가능한 양은 이불 1장, 침대커버 1장 베개커버 2장이에요</li>
+              <li>• 시계•반지•목걸이 등 귀금속은 신청 전 반드시 확인해 주세요</li>
+              <li>• 오염이 심한 경우 당일 세탁이 어려워 고객님께 연락드릴 수 있어요</li>
+              <li>• 세탁물에 문제가 발생할 경우 캐리에서 100% 보상해드려요</li>
+            </ul>
+          </div>
+        </div>
+      </div>
 
       {/* Order Summary */}
       <div className="rounded-2xl bg-white shadow-sm p-4">
@@ -317,7 +464,7 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-gray-600">세탁 서비스 ({quantity}건)</span>
-            <span className="text-gray-900">{(10000 * quantity).toLocaleString()}원</span>
+            <span className="text-gray-900">{(11900 * quantity).toLocaleString()}원</span>
           </div>
           <div className="flex justify-between items-center">
             <div>
@@ -326,19 +473,19 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
             </div>
             <div className="flex items-center gap-1">
               <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">할인</span>
-              <span className="text-gray-900">1,900원</span>
+              <span className="text-gray-900">0원</span>
             </div>
           </div>
           <div className="bg-green-50 border border-green-200 rounded-lg p-2 mt-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-green-700">🎉 신규 고객 할인 적용</span>
-              <span className="text-green-600 font-medium">1,100원 할인</span>
+              <span className="text-green-700">🎉 신규 고객 배달비 무료!</span>
+              <span className="text-green-600 font-medium">3,000원 할인</span>
             </div>
           </div>
           <div className="border-t border-gray-200 pt-2 mt-2">
             <div className="flex justify-between font-semibold">
               <span className="text-gray-900">총 결제금액</span>
-              <span className="text-gray-900">{(10000 * quantity + 1900).toLocaleString()}원</span>
+              <span className="text-gray-900">{(11900 * quantity).toLocaleString()}원</span>
             </div>
           </div>
         </div>
