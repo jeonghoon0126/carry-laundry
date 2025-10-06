@@ -7,6 +7,9 @@ export type AddressCore = {
   zipcode?: string;
   address1: string; // 도로명주소
   address2?: string; // 상세주소
+  addressDetail?: string; // 동/호수 등
+  entranceMethod?: "free" | "password" | "security" | "call" | "other";
+  entranceNote?: string; // free text for password/other
   si?: string;
   gu?: string;
   dong?: string;

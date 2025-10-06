@@ -85,6 +85,76 @@ export default function AddressSection({ value, onChange, className }: Props) {
       <p className="text-gray-600 mt-1">
         {addr.address1} {addr.address2 ? ` ${addr.address2}` : ""}{addr.zipcode ? ` (${addr.zipcode})` : ""}
       </p>
+
+      {/* 상세주소 입력 */}
+      <div className="mt-4">
+        <label className="block text-sm font-medium text-gray-900 mb-2">
+          상세주소
+        </label>
+        <input
+          type="text"
+          value={addr.addressDetail || ""}
+          onChange={(e) => {
+            const updated = { ...addr, addressDetail: e.target.value };
+            setAddr(updated);
+            onChange?.(updated);
+            void persistDefaultAddress(updated);
+          }}
+          placeholder="동/호수 등"
+          className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#13C2C2] focus:border-transparent"
+        />
+      </div>
+
+      {/* 현관 출입 방법 */}
+      <div className="mt-4">
+        <label className="block text-sm font-medium text-gray-900 mb-2">
+          현관 출입 방법
+        </label>
+        <div className="space-y-2">
+          {[
+            { value: "free", label: "자유 출입" },
+            { value: "password", label: "공동현관 비밀번호" },
+            { value: "security", label: "경비실 호출" },
+            { value: "other", label: "기타" }
+          ].map((option) => (
+            <label key={option.value} className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="entranceMethod"
+                value={option.value}
+                checked={addr.entranceMethod === option.value}
+                onChange={(e) => {
+                  const updated = { ...addr, entranceMethod: e.target.value as any };
+                  setAddr(updated);
+                  onChange?.(updated);
+                  void persistDefaultAddress(updated);
+                }}
+                className="w-4 h-4 text-[#13C2C2]"
+              />
+              <span className="text-sm text-gray-900">{option.label}</span>
+            </label>
+          ))}
+        </div>
+
+        {/* 출입 안내 입력 (password 또는 other 선택 시) */}
+        {(addr.entranceMethod === "password" || addr.entranceMethod === "other") && (
+          <div className="mt-3">
+            <input
+              type="text"
+              value={addr.entranceNote || ""}
+              onChange={(e) => {
+                const updated = { ...addr, entranceNote: e.target.value };
+                setAddr(updated);
+                onChange?.(updated);
+                void persistDefaultAddress(updated);
+              }}
+              placeholder="출입 안내"
+              className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#13C2C2] focus:border-transparent"
+            />
+          </div>
+        )}
+      </div>
+
       <AddressSearch open={open} onClose={() => setOpen(false)} onSelect={handleSelect} />
     </section>
   );

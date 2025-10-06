@@ -92,6 +92,11 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
           phone,
           address,
           specialRequests,
+          shippingAddress: shippingAddress ? {
+            addressDetail: shippingAddress.addressDetail,
+            entranceMethod: shippingAddress.entranceMethod,
+            entranceNote: shippingAddress.entranceNote,
+          } : undefined,
         }),
       })
 
