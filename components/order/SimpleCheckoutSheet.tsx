@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { MapPin, MessageSquare, CreditCard } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
+import { cn } from '@/lib/utils'
 import type { AddressCore } from '@/lib/addresses'
 
 interface PaymentMethod {
@@ -73,14 +74,39 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
     )
   }
 
-  const isFormValid = name && phone && address && paymentMethod
+  // CTA 활성화 조건 개선: 상태가 즉시 반영되도록 useMemo 제거 및 의존성 확실화
+  const isDisabled =
+    isSubmitting ||
+    !name?.trim() ||
+    !/^01[0-9]-?\d{3,4}-?\d{4}$/.test(phone || "") ||
+    !shippingAddress?.address?.trim();
 
+  // 디버깅용
+  console.debug("CTA 활성화 검사", {
+    name,
+    phone,
+    address: shippingAddress?.address,
+    disabled: isDisabled,
+  });
+
+  // 결제 버튼 클릭 시 어떤 결제수단이든 Toss로 연결
   const handlePay = async () => {
-    if (tossPaymentsError || (paymentMethod === 'toss' && !isTossScriptLoaded)) {
-      return
-    }
-
     try {
+      if (isDisabled) return;
+      setIsSubmitting(true);
+
+      // 관악구 제한 로직 추가
+      const addressText = shippingAddress?.address1 || "";
+      if (!addressText.includes("관악구")) {
+        alert("현재는 관악구 내 주소만 주문 가능합니다.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 모든 결제수단은 Toss로 통일
+      if (tossPaymentsError || !isTossScriptLoaded) {
+        throw new Error('Toss Payments not ready');
+      }
       // Create order
       const orderResponse = await fetch('/api/orders', {
         method: 'POST',
@@ -133,9 +159,11 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
           failUrl,
         })
       }
-    } catch (error) {
-      console.error('Payment error:', error)
-      router.push('/order?error=payment_failed')
+    } catch (err) {
+      console.error("Payment error", err);
+      router.push('/order?error=payment_failed');
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -271,17 +299,16 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
       {/* Fixed Bottom CTA */}
       <div className="sticky bottom-4 pt-4">
         <Button
-          variant="primary"
           onClick={handlePay}
-          disabled={!isFormValid || tossPaymentsError !== '' || (paymentMethod === 'toss' && !isTossScriptLoaded)}
-          className="w-full py-4 text-lg font-semibold"
+          disabled={isDisabled}
+          className={cn(
+            "w-full h-14 rounded-xl font-semibold transition",
+            isDisabled
+              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+              : "bg-[#13C2C2] text-white hover:brightness-95"
+          )}
         >
-          {!isFormValid 
-            ? '주문 정보를 입력해주세요'
-            : tossPaymentsError || (paymentMethod === 'toss' && !isTossScriptLoaded)
-            ? '결제 준비 중...'
-            : '11,900원 결제하기'
-          }
+          {isSubmitting ? "결제 중..." : "주문하기"}
         </Button>
       </div>
     </div>
