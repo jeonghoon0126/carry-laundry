@@ -4,7 +4,7 @@ import AddressSection from "@/components/order/AddressSection";
 import SimpleCheckoutSheet from "@/components/order/SimpleCheckoutSheet";
 import type { AddressCore } from "@/lib/addresses";
 
-// Prevent Next.js from trying to prerender this page at build time.
+// Fix: ensure this page is rendered dynamically, not prerendered.
 export const dynamic = "force-dynamic";
 
 export default function OrderPage() {
@@ -18,17 +18,16 @@ export default function OrderPage() {
   return (
     <main className="min-h-[100dvh] w-full bg-gray-50 px-4 py-6">
       <div className="mx-auto w-full max-w-[720px]">
-        {/* Title */}
         <h1 className="text-2xl font-semibold mb-4">세탁 주문</h1>
 
-        {/* Address section directly under the title */}
+        {/* 배송지 정보 섹션 */}
         <AddressSection
           value={shippingAddress}
           onChange={(addr) => setShippingAddress(addr)}
           className="mb-4"
         />
 
-        {/* Checkout Sheet (handles its own submitting state) */}
+        {/* 결제 섹션 (isSubmitting은 내부에서 관리) */}
         <SimpleCheckoutSheet shippingAddress={shippingAddress} />
       </div>
     </main>
