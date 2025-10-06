@@ -74,28 +74,19 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
     )
   }
 
-  // CTA 활성화 조건 개선: 상태가 즉시 반영되도록 useMemo 제거 및 의존성 확실화
+  // CTA 활성화 조건: 이름/전화/주소 3개만 만족하면 활성화, 상태는 렌더마다 즉시 반영
   const isDisabled =
     isSubmitting ||
     !name?.trim() ||
     !/^01[0-9]-?\d{3,4}-?\d{4}$/.test(phone || "") ||
-    !shippingAddress?.address?.trim();
+    !shippingAddress?.address1?.trim();
 
-  // 디버깅용
-  console.debug("CTA 활성화 검사", {
-    name,
-    phone,
-    address: shippingAddress?.address,
-    disabled: isDisabled,
-  });
-
-  // 결제 버튼 클릭 시 어떤 결제수단이든 Toss로 연결
-  const handlePay = async () => {
+  const handlePayment = async () => {
     try {
       if (isDisabled) return;
       setIsSubmitting(true);
 
-      // 관악구 제한 로직 추가
+      // ✅ 관악구 제한 (배달 가능 지역)
       const addressText = shippingAddress?.address1 || "";
       if (!addressText.includes("관악구")) {
         alert("현재는 관악구 내 주소만 주문 가능합니다.");
@@ -103,7 +94,7 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
         return;
       }
 
-      // 모든 결제수단은 Toss로 통일
+      // ✅ 결제수단 무엇을 선택하든 Toss 결제창으로 연결
       if (tossPaymentsError || !isTossScriptLoaded) {
         throw new Error('Toss Payments not ready');
       }
@@ -299,7 +290,7 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
       {/* Fixed Bottom CTA */}
       <div className="sticky bottom-4 pt-4">
         <Button
-          onClick={handlePay}
+          onClick={handlePayment}
           disabled={isDisabled}
           className={cn(
             "w-full h-14 rounded-xl font-semibold transition",

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import AddressSection from "@/components/order/AddressSection";
@@ -9,6 +9,9 @@ import type { AddressCore } from "@/lib/addresses";
 export default function OrderPage() {
   const router = useRouter();
   const [shippingAddress, setShippingAddress] = useState<AddressCore | null>(null);
+  
+  // ✅ 이 페이지에서는 isSubmitting을 절대 사용하지 않습니다.
+  //    SimpleCheckoutSheet 내부에서만 관리합니다.
   
   return (
     <main className="min-h-[100dvh] bg-gray-50">
@@ -24,19 +27,19 @@ export default function OrderPage() {
           <h1 className="text-xl font-semibold">세탁 주문</h1>
         </div>
 
-        {/* 배송지 정보 카드 */}
+        {/* 페이지 타이틀 */}
+        <h1 className="text-2xl font-semibold mb-4">세탁 주문</h1>
+        {/* 배송지 정보 섹션 (타이틀 바로 아래) */}
         <AddressSection
           value={shippingAddress}
-          onChange={setShippingAddress}
-          className="rounded-2xl border border-gray-200 bg-white shadow-sm p-5"
+          onChange={(addr) => setShippingAddress(addr)}
+          className="mb-4"
         />
-
-        {/* 체크아웃 시트에서는 내부 배송지 입력을 숨김 -> 중복 제거 */}
-        <SimpleCheckoutSheet
-          shippingAddress={shippingAddress}
-          hideAddressInput
-        />
+        {/* 체크아웃 시트 */}
+        <SimpleCheckoutSheet shippingAddress={shippingAddress} />
       </div>
     </main>
   );
 }
+
+// ✅ 주의: page.tsx에서 isSubmitting / isDisabled를 계산하거나 프롭으로 넘기던 코드가 있었다면 전부 제거되었습니다.
