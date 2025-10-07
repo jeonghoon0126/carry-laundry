@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Save, MapPin } from 'lucide-react'
+import { X, Save, MapPin, Search } from 'lucide-react'
+import AddressSearch from '@/components/order/AddressSearch'
 
 interface Address {
   id: string
@@ -30,6 +31,7 @@ export default function AddressForm({ address, onClose }: AddressFormProps) {
     isDefault: address?.is_default || false
   })
   const [loading, setLoading] = useState(false)
+  const [showAddressSearch, setShowAddressSearch] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -74,6 +76,21 @@ export default function AddressForm({ address, onClose }: AddressFormProps) {
     }))
   }
 
+  // 주소 검색 결과 처리
+  const handleAddressSelect = (selectedAddress: {
+    zipcode?: string
+    address1: string
+    si?: string
+    gu?: string
+    dong?: string
+  }) => {
+    setFormData(prev => ({
+      ...prev,
+      address1: selectedAddress.address1
+    }))
+    setShowAddressSearch(false)
+  }
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
@@ -111,14 +128,24 @@ export default function AddressForm({ address, onClose }: AddressFormProps) {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               주소 <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
-              value={formData.address1}
-              onChange={(e) => handleInputChange('address1', e.target.value)}
-              placeholder="예: 서울 관악구 과천대로 863"
-              className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#13C2C2] focus:border-transparent"
-              required
-            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={formData.address1}
+                onChange={(e) => handleInputChange('address1', e.target.value)}
+                placeholder="예: 서울 관악구 과천대로 863"
+                className="flex-1 p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#13C2C2] focus:border-transparent"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowAddressSearch(true)}
+                className="px-4 py-3 bg-[#13C2C2] text-white rounded-lg hover:bg-[#0FA8A8] transition-colors flex items-center gap-2"
+              >
+                <Search className="w-4 h-4" />
+                검색
+              </button>
+            </div>
           </div>
 
           {/* 상세주소 */}
@@ -223,6 +250,13 @@ export default function AddressForm({ address, onClose }: AddressFormProps) {
           </div>
         </form>
       </div>
+
+      {/* 주소 검색 모달 */}
+      <AddressSearch
+        open={showAddressSearch}
+        onClose={() => setShowAddressSearch(false)}
+        onSelect={handleAddressSelect}
+      />
     </div>
   )
 }
