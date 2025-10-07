@@ -15,7 +15,7 @@ interface UseNicknameReturn {
 
 export function useNickname(): UseNicknameReturn {
   const { data: session, status } = useSession()
-  const [nickname, setNickname] = useState<string | null>(null)
+  const [nickname, setNickname] = useState<string | null>(generateNicknameWithNumber())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 

@@ -125,7 +125,7 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: nickname || '고객',
+          name: (nickname && nickname.trim()) || '고객',
           phone,
           address: shippingAddress?.address1 || address,
         })
@@ -145,7 +145,7 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: nickname || '고객',
+          name: (nickname && nickname.trim()) || '고객',
           phone,
           address: shippingAddress?.address1 || address,
           quantity,
