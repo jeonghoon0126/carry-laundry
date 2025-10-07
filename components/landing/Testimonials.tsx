@@ -37,7 +37,22 @@ export default function Testimonials() {
           {/* Rating */}
           <div className="flex items-center mb-2">
             {[...Array(testimonials[0].rating)].map((_, i) => (
-              <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
+              <motion.div
+                key={i}
+                animate={{ 
+                  scale: [1, 1.2, 1],
+                  rotate: [0, 10, -10, 0],
+                  transition: { 
+                    duration: 1.5, 
+                    repeat: Infinity, 
+                    ease: "easeInOut",
+                    delay: i * 0.1
+                  }
+                }}
+                whileHover={{ scale: 1.3, rotate: [0, -15, 15, 0] }}
+              >
+                <Star className="w-4 h-4 text-yellow-400 fill-current" />
+              </motion.div>
             ))}
           </div>
 

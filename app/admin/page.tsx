@@ -1,7 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import Skeleton, { SkeletonCard } from '@/components/common/Skeleton'
-import { RefreshCw, Search, TrendingUp, Users, Package, CreditCard, AlertCircle, X, AlertTriangle } from 'lucide-react'
+import { RefreshCw, Search, TrendingUp, Users, Package, CreditCard, AlertCircle, X, AlertTriangle, Play, CheckCircle, Truck } from 'lucide-react'
 
 type Order = { 
   id: number
@@ -13,6 +14,12 @@ type Order = {
   paid: boolean
   payment_amount: number | null
   payment_id: string | null
+  status?: string
+  processing_started_at?: string
+  completed_at?: string
+  delivered_at?: string
+  pickup_photo_url?: string
+  delivery_photo_url?: string
   profiles?: {
     name: string | null
     email: string | null
@@ -37,6 +44,14 @@ interface CancelModalState {
   isCancelling: boolean
 }
 
+interface StatusUpdateModalState {
+  isOpen: boolean
+  orderId: string | null
+  currentStatus: string | null
+  targetStatus: string | null
+  isUpdating: boolean
+}
+
 export default function AdminPage() {
   const [orders, setOrders] = useState<Order[] | null>(null)
   const [stats, setStats] = useState<AdminStats | null>(null)
@@ -50,6 +65,14 @@ export default function AdminPage() {
     orderId: null,
     orderNumber: null,
     isCancelling: false
+  })
+  
+  const [statusModal, setStatusModal] = useState<StatusUpdateModalState>({
+    isOpen: false,
+    orderId: null,
+    currentStatus: null,
+    targetStatus: null,
+    isUpdating: false
   })
 
   async function load(isRefresh = false) {
@@ -160,10 +183,98 @@ export default function AdminPage() {
     }
   }
 
+  const handleStatusUpdateClick = (orderId: string, currentStatus: string, targetStatus: string) => {
+    setStatusModal({
+      isOpen: true,
+      orderId,
+      currentStatus,
+      targetStatus,
+      isUpdating: false
+    })
+  }
+
+  const handleStatusModalClose = () => {
+    setStatusModal({
+      isOpen: false,
+      orderId: null,
+      currentStatus: null,
+      targetStatus: null,
+      isUpdating: false
+    })
+  }
+
+  const handleStatusUpdateConfirm = async () => {
+    if (!statusModal.orderId || !statusModal.targetStatus) return
+    
+    setStatusModal(prev => ({ ...prev, isUpdating: true }))
+    
+    try {
+      const response = await fetch(`/api/orders/${statusModal.orderId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          status: statusModal.targetStatus,
+          notes: `관리자에 의한 상태 변경: ${statusModal.currentStatus} → ${statusModal.targetStatus}`
+        })
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error('Status update API error:', errorData)
+        
+        // 디버그 정보가 있으면 더 자세한 메시지 제공
+        if (errorData.debug) {
+          console.log('Debug info:', errorData.debug)
+        }
+        
+        throw new Error(errorData.error || 'Failed to update order status')
+      }
+      
+      // 주문 목록 새로고침
+      await load(true)
+      
+      handleStatusModalClose()
+      alert(`주문 상태가 성공적으로 ${statusModal.targetStatus}로 변경되었습니다.`)
+    } catch (error) {
+      console.error('Error updating order status:', error)
+      alert(`주문 상태 변경 실패: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setStatusModal(prev => ({ ...prev, isUpdating: false }))
+    }
+  }
+
   // 취소 가능한 주문인지 확인 (어드민은 모든 결제완료 주문 취소 가능)
   const canCancelOrder = (order: Order) => {
     // 결제가 완료되었고 취소되지 않은 주문만 취소 가능
     return order.paid === true && order.status !== 'cancelled'
+  }
+
+  // 주문 상태 변경 가능 여부 확인
+  const canUpdateOrderStatus = (currentStatus: string | undefined, targetStatus: string) => {
+    if (!currentStatus) return false
+    
+    const validTransitions: Record<string, string[]> = {
+      pending: ['processing', 'cancelled'],
+      processing: ['completed', 'cancelled'],
+      completed: ['delivered'],
+      delivered: [],
+      cancelled: []
+    }
+    
+    return validTransitions[currentStatus]?.includes(targetStatus) || false
+  }
+
+  // 주문 상태별 표시 텍스트와 아이콘
+  const getStatusDisplay = (status: string | undefined) => {
+    const statusMap: Record<string, { text: string; icon: React.ReactNode; color: string }> = {
+      pending: { text: '주문 접수', icon: <AlertCircle className="w-4 h-4" />, color: 'bg-yellow-100 text-yellow-800' },
+      processing: { text: '처리 중', icon: <Play className="w-4 h-4" />, color: 'bg-blue-100 text-blue-800' },
+      completed: { text: '세탁 완료', icon: <CheckCircle className="w-4 h-4" />, color: 'bg-green-100 text-green-800' },
+      delivered: { text: '배송 완료', icon: <Truck className="w-4 h-4" />, color: 'bg-purple-100 text-purple-800' },
+      cancelled: { text: '주문 취소', icon: <X className="w-4 h-4" />, color: 'bg-red-100 text-red-800' }
+    }
+    
+    return statusMap[status || 'pending'] || statusMap.pending
   }
 
   const filtered = (orders ?? []).filter(o => {
@@ -198,10 +309,10 @@ export default function AdminPage() {
           {/* Stats Skeleton */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {[...Array(6)].map((_, i) => (
-              <SkeletonCard key={i} className="p-4">
+              <div key={i} className="bg-white rounded-2xl shadow-sm p-4">
                 <Skeleton className="h-4 w-16 mb-2" />
                 <Skeleton className="h-8 w-12" />
-              </SkeletonCard>
+              </div>
             ))}
           </div>
           
@@ -213,13 +324,13 @@ export default function AdminPage() {
           </div>
           
           {/* Table Skeleton */}
-          <SkeletonCard className="overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
             <div className="space-y-3 p-4">
               {[...Array(5)].map((_, i) => (
                 <Skeleton className="h-12 w-full" key={i} />
               ))}
             </div>
-          </SkeletonCard>
+          </div>
         </div>
       </div>
     )
@@ -264,76 +375,195 @@ export default function AdminPage() {
         </div>
       
         {/* Stats Cards */}
-        {stats && (
+      {stats && (
           <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
-            <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="group bg-gradient-to-br from-white to-blue-50/30 p-4 sm:p-6 rounded-2xl shadow-lg border border-blue-100 hover:shadow-xl transition-all duration-300 hover:scale-105">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Package className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                <div className="relative w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:shadow-blue-200 transition-all duration-300">
+                  {/* Pulse ring */}
+                  <div className="absolute inset-0 bg-blue-400 rounded-xl animate-ping opacity-20"></div>
+                  
+                  {/* Icon with bounce animation */}
+                  <motion.div
+                    animate={{ 
+                      y: [0, -2, 0],
+                      transition: { 
+                        duration: 2, 
+                        repeat: Infinity, 
+                        ease: "easeInOut" 
+                      }
+                    }}
+                    whileHover={{ scale: 1.2, rotate: [0, -5, 5, 0] }}
+                  >
+                    <Package className="w-4 h-4 sm:w-5 sm:h-5 text-white relative z-10" />
+                  </motion.div>
+                  
+                  {/* Shimmer effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 rounded-xl"></div>
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">총 주문</p>
-                  <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.totalOrders}</p>
+                  <p className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">{stats.totalOrders}</p>
                 </div>
               </div>
             </div>
             
-            <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="group bg-gradient-to-br from-white to-green-50/30 p-4 sm:p-6 rounded-2xl shadow-lg border border-green-100 hover:shadow-xl transition-all duration-300 hover:scale-105">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                <div className="relative w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:shadow-green-200 transition-all duration-300">
+                  {/* Pulse ring */}
+                  <div className="absolute inset-0 bg-green-400 rounded-xl animate-ping opacity-20" style={{ animationDelay: '0.5s' }}></div>
+                  
+                  {/* Icon with bounce animation */}
+                  <motion.div
+                    animate={{ 
+                      y: [0, -2, 0],
+                      transition: { 
+                        duration: 2, 
+                        repeat: Infinity, 
+                        ease: "easeInOut",
+                        delay: 0.5
+                      }
+                    }}
+                    whileHover={{ scale: 1.2, rotate: [0, -5, 5, 0] }}
+                  >
+                    <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-white relative z-10" />
+                  </motion.div>
+                  
+                  {/* Shimmer effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 rounded-xl"></div>
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">결제완료</p>
-                  <p className="text-lg sm:text-2xl font-bold text-green-600">{stats.paidOrders}</p>
+                  <p className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent">{stats.paidOrders}</p>
                 </div>
               </div>
             </div>
             
-            <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="group bg-gradient-to-br from-white to-red-50/30 p-4 sm:p-6 rounded-2xl shadow-lg border border-red-100 hover:shadow-xl transition-all duration-300 hover:scale-105">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
+                <div className="relative w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:shadow-red-200 transition-all duration-300">
+                  {/* Pulse ring */}
+                  <div className="absolute inset-0 bg-red-400 rounded-xl animate-ping opacity-20" style={{ animationDelay: '1s' }}></div>
+                  
+                  {/* Icon with bounce animation */}
+                  <motion.div
+                    animate={{ 
+                      y: [0, -2, 0],
+                      transition: { 
+                        duration: 2, 
+                        repeat: Infinity, 
+                        ease: "easeInOut",
+                        delay: 1
+                      }
+                    }}
+                    whileHover={{ scale: 1.2, rotate: [0, -5, 5, 0] }}
+                  >
+                    <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-white relative z-10" />
+                  </motion.div>
+                  
+                  {/* Shimmer effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 rounded-xl"></div>
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">미결제</p>
-                  <p className="text-lg sm:text-2xl font-bold text-red-600">{stats.unpaidOrders}</p>
+                  <p className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent">{stats.unpaidOrders}</p>
                 </div>
               </div>
             </div>
             
-            <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="group bg-gradient-to-br from-white to-cyan-50/30 p-4 sm:p-6 rounded-2xl shadow-lg border border-cyan-100 hover:shadow-xl transition-all duration-300 hover:scale-105">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#13C2C2]/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-[#13C2C2]" />
+                <div className="relative w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-[#13C2C2] to-[#0FA8A8] rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:shadow-cyan-200 transition-all duration-300">
+                  {/* Pulse ring */}
+                  <div className="absolute inset-0 bg-[#13C2C2] rounded-xl animate-ping opacity-20" style={{ animationDelay: '1.5s' }}></div>
+                  
+                  {/* Icon with bounce animation */}
+                  <motion.div
+                    animate={{ 
+                      y: [0, -2, 0],
+                      transition: { 
+                        duration: 2, 
+                        repeat: Infinity, 
+                        ease: "easeInOut",
+                        delay: 1.5
+                      }
+                    }}
+                    whileHover={{ scale: 1.2, rotate: [0, -5, 5, 0] }}
+                  >
+                    <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-white relative z-10" />
+                  </motion.div>
+                  
+                  {/* Shimmer effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 rounded-xl"></div>
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">총 매출</p>
-                  <p className="text-lg sm:text-2xl font-bold text-[#13C2C2]">{stats.totalRevenue.toLocaleString()}원</p>
+                  <p className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-[#13C2C2] to-[#0FA8A8] bg-clip-text text-transparent">{stats.totalRevenue.toLocaleString()}원</p>
                 </div>
               </div>
             </div>
             
-            <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="group bg-gradient-to-br from-white to-purple-50/30 p-4 sm:p-6 rounded-2xl shadow-lg border border-purple-100 hover:shadow-xl transition-all duration-300 hover:scale-105">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Users className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
+                <div className="relative w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:shadow-purple-200 transition-all duration-300">
+                  {/* Pulse ring */}
+                  <div className="absolute inset-0 bg-purple-400 rounded-xl animate-ping opacity-20" style={{ animationDelay: '2s' }}></div>
+                  
+                  {/* Icon with bounce animation */}
+                  <motion.div
+                    animate={{ 
+                      y: [0, -2, 0],
+                      transition: { 
+                        duration: 2, 
+                        repeat: Infinity, 
+                        ease: "easeInOut",
+                        delay: 2
+                      }
+                    }}
+                    whileHover={{ scale: 1.2, rotate: [0, -5, 5, 0] }}
+                  >
+                    <Users className="w-4 h-4 sm:w-5 sm:h-5 text-white relative z-10" />
+                  </motion.div>
+                  
+                  {/* Shimmer effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 rounded-xl"></div>
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">가입 사용자</p>
-                  <p className="text-lg sm:text-2xl font-bold text-purple-600">{stats.distinctUsers}</p>
+                  <p className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">{stats.distinctUsers}</p>
                 </div>
               </div>
             </div>
             
-            <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="group bg-gradient-to-br from-white to-orange-50/30 p-4 sm:p-6 rounded-2xl shadow-lg border border-orange-100 hover:shadow-xl transition-all duration-300 hover:scale-105">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Package className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
+                <div className="relative w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:shadow-orange-200 transition-all duration-300">
+                  {/* Pulse ring */}
+                  <div className="absolute inset-0 bg-orange-400 rounded-xl animate-ping opacity-20" style={{ animationDelay: '2.5s' }}></div>
+                  
+                  {/* Icon with bounce animation */}
+                  <motion.div
+                    animate={{ 
+                      y: [0, -2, 0],
+                      transition: { 
+                        duration: 2, 
+                        repeat: Infinity, 
+                        ease: "easeInOut",
+                        delay: 2.5
+                      }
+                    }}
+                    whileHover={{ scale: 1.2, rotate: [0, -5, 5, 0] }}
+                  >
+                    <Package className="w-4 h-4 sm:w-5 sm:h-5 text-white relative z-10" />
+                  </motion.div>
+                  
+                  {/* Shimmer effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 rounded-xl"></div>
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">오늘 주문</p>
-                  <p className="text-lg sm:text-2xl font-bold text-orange-600">{stats.todayOrders}</p>
+                  <p className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-orange-600 to-orange-800 bg-clip-text text-transparent">{stats.todayOrders}</p>
                 </div>
               </div>
             </div>
@@ -413,20 +643,15 @@ export default function AdminPage() {
                           </span>
                         )}
                       </div>
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                        o.status === 'cancelled'
-                          ? 'bg-gray-100 text-gray-800'
-                          : o.paid === true 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                      }`}>
-                        {o.status === 'cancelled' 
-                          ? '주문취소' 
-                          : o.paid === true 
-                            ? '결제완료' 
-                            : '미결제'
-                        }
-                      </span>
+                      {(() => {
+                        const statusDisplay = getStatusDisplay(o.status)
+                        return (
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusDisplay.color}`}>
+                            {statusDisplay.icon}
+                            <span className="ml-1">{statusDisplay.text}</span>
+                          </span>
+                        )
+                      })()}
                     </div>
                     
                     <div className="space-y-2">
@@ -456,9 +681,41 @@ export default function AdminPage() {
                       </div>
                     </div>
                     
-                    {/* Mobile Cancel Button */}
-                    {canCancelOrder(o) && (
-                      <div className="pt-3 border-t border-gray-100">
+                    {/* Mobile Action Buttons */}
+                    <div className="pt-3 border-t border-gray-100 space-y-2">
+                      {/* 상태 변경 버튼들 */}
+                      {o.status === 'pending' && canUpdateOrderStatus(o.status, 'processing') && (
+                        <button
+                          onClick={() => handleStatusUpdateClick(o.id.toString(), o.status || 'pending', 'processing')}
+                          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                        >
+                          <Play className="w-4 h-4" />
+                          처리 시작
+                        </button>
+                      )}
+                      
+                      {o.status === 'processing' && canUpdateOrderStatus(o.status, 'completed') && (
+                        <button
+                          onClick={() => handleStatusUpdateClick(o.id.toString(), o.status || 'processing', 'completed')}
+                          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-green-600 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                          세탁 완료
+                        </button>
+                      )}
+                      
+                      {o.status === 'completed' && canUpdateOrderStatus(o.status, 'delivered') && (
+                        <button
+                          onClick={() => handleStatusUpdateClick(o.id.toString(), o.status || 'completed', 'delivered')}
+                          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+                        >
+                          <Truck className="w-4 h-4" />
+                          배송 완료
+                        </button>
+                      )}
+                      
+                      {/* 취소 버튼 */}
+                      {canCancelOrder(o) && (
                         <button
                           onClick={() => handleCancelClick(o.id.toString(), `#${o.id}`)}
                           className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
@@ -466,12 +723,12 @@ export default function AdminPage() {
                           <X className="w-4 h-4" />
                           주문 취소
                         </button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
-            </div>
+      </div>
             
             {/* Desktop Table View */}
             <div className="hidden md:block overflow-x-auto">
@@ -494,7 +751,7 @@ export default function AdminPage() {
                       주소
                     </th>
                     <th className="px-4 lg:px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      결제상태
+                      주문상태
                     </th>
                     <th className="px-4 lg:px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       결제금액
@@ -502,8 +759,8 @@ export default function AdminPage() {
                     <th className="px-4 lg:px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       액션
                     </th>
-                  </tr>
-                </thead>
+            </tr>
+          </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filtered.map((o, index) => (
                     <tr key={o.id} className={`hover:bg-gray-50 transition-colors ${
@@ -523,7 +780,7 @@ export default function AdminPage() {
                         </div>
                       </td>
                       <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
-                        {o.user_id ? (
+                  {o.user_id ? (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                             <Users className="w-3 h-3 mr-1" />
                             <span className="hidden lg:inline">가입회원</span>
@@ -546,33 +803,16 @@ export default function AdminPage() {
                         {o.address}
                       </td>
                       <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                          o.status === 'cancelled'
-                            ? 'bg-gray-100 text-gray-800'
-                            : o.paid === true 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'
-                        }`}>
-                          {o.status === 'cancelled' ? (
-                            <>
-                              <X className="w-3 h-3 mr-1" />
-                              <span className="hidden lg:inline">주문취소</span>
-                              <span className="lg:hidden">취소</span>
-                            </>
-                          ) : o.paid === true ? (
-                            <>
-                              <CreditCard className="w-3 h-3 mr-1" />
-                              <span className="hidden lg:inline">결제완료</span>
-                              <span className="lg:hidden">완료</span>
-                            </>
-                          ) : (
-                            <>
-                              <AlertCircle className="w-3 h-3 mr-1" />
-                              <span className="hidden lg:inline">미결제</span>
-                              <span className="lg:hidden">미결제</span>
-                            </>
-                          )}
-                        </span>
+                        {(() => {
+                          const statusDisplay = getStatusDisplay(o.status)
+                          return (
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusDisplay.color}`}>
+                              {statusDisplay.icon}
+                              <span className="hidden lg:inline ml-1">{statusDisplay.text}</span>
+                              <span className="lg:hidden ml-1">{statusDisplay.text.split(' ')[0]}</span>
+                            </span>
+                          )
+                        })()}
                       </td>
                       <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-xs lg:text-sm text-right">
                         {o.payment_amount ? (
@@ -582,23 +822,57 @@ export default function AdminPage() {
                           </span>
                         ) : (
                           <span className="text-gray-400">-</span>
-                        )}
-                      </td>
-                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-center">
-                        {canCancelOrder(o) && (
-                          <button
-                            onClick={() => handleCancelClick(o.id.toString(), `#${o.id}`)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
-                          >
-                            <X className="w-3 h-3" />
-                            <span className="hidden lg:inline">취소</span>
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                  )}
+                </td>
+                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                        <div className="flex flex-col gap-1">
+                          {/* 상태 변경 버튼들 */}
+                          {o.status === 'pending' && canUpdateOrderStatus(o.status, 'processing') && (
+                            <button
+                              onClick={() => handleStatusUpdateClick(o.id.toString(), o.status || 'pending', 'processing')}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded hover:bg-blue-100 transition-colors"
+                            >
+                              <Play className="w-3 h-3" />
+                              <span className="hidden lg:inline">처리시작</span>
+                            </button>
+                          )}
+                          
+                          {o.status === 'processing' && canUpdateOrderStatus(o.status, 'completed') && (
+                            <button
+                              onClick={() => handleStatusUpdateClick(o.id.toString(), o.status || 'processing', 'completed')}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-600 bg-green-50 rounded hover:bg-green-100 transition-colors"
+                            >
+                              <CheckCircle className="w-3 h-3" />
+                              <span className="hidden lg:inline">완료</span>
+                            </button>
+                          )}
+                          
+                          {o.status === 'completed' && canUpdateOrderStatus(o.status, 'delivered') && (
+                            <button
+                              onClick={() => handleStatusUpdateClick(o.id.toString(), o.status || 'completed', 'delivered')}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-purple-600 bg-purple-50 rounded hover:bg-purple-100 transition-colors"
+                            >
+                              <Truck className="w-3 h-3" />
+                              <span className="hidden lg:inline">배송완료</span>
+                            </button>
+                          )}
+                          
+                          {/* 취소 버튼 */}
+                          {canCancelOrder(o) && (
+                            <button
+                              onClick={() => handleCancelClick(o.id.toString(), `#${o.id}`)}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors"
+                            >
+                              <X className="w-3 h-3" />
+                              <span className="hidden lg:inline">취소</span>
+                            </button>
+                          )}
+                        </div>
+                    </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
             </div>
           </div>
         )}
@@ -646,6 +920,63 @@ export default function AdminPage() {
                       </>
                     ) : (
                       '주문 취소'
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Status Update Confirmation Modal */}
+        {statusModal.isOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-200">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Play className="w-8 h-8 text-blue-600" />
+                </div>
+                
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  주문 상태를 변경하시겠어요?
+                </h3>
+                
+                <div className="text-sm text-gray-600 mb-6 space-y-2">
+                  <p>주문번호: <span className="font-mono">#{statusModal.orderId}</span></p>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="px-2 py-1 bg-gray-100 rounded text-xs">
+                      {statusModal.currentStatus}
+                    </span>
+                    <span className="text-gray-400">→</span>
+                    <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                      {statusModal.targetStatus}
+                    </span>
+                  </div>
+                  <p className="text-blue-600 text-xs">
+                    상태 변경 후에는 되돌릴 수 없습니다.
+                  </p>
+                </div>
+                
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleStatusModalClose}
+                    disabled={statusModal.isUpdating}
+                    className="flex-1 px-4 py-3 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={handleStatusUpdateConfirm}
+                    disabled={statusModal.isUpdating}
+                    className="flex-1 px-4 py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {statusModal.isUpdating ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        변경 중...
+                      </>
+                    ) : (
+                      '상태 변경'
                     )}
                   </button>
                 </div>

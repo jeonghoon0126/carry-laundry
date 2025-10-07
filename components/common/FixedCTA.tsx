@@ -2,14 +2,17 @@
 
 import { useRouter, usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
+import { useOrderProgress } from '@/lib/contexts/OrderProgressContext'
 
 export default function FixedCTA() {
   const router = useRouter()
   const pathname = usePathname()
   const { data: session, status } = useSession()
+  const { isOrderProgressVisible } = useOrderProgress()
 
   // Hidden on /order, /admin, /auth/guest-gate, /mypage and their children
-  const shouldHide = pathname.startsWith('/order') || pathname.startsWith('/admin') || pathname.startsWith('/auth/guest-gate') || pathname.startsWith('/mypage')
+  // Also hidden when order progress is visible
+  const shouldHide = pathname.startsWith('/order') || pathname.startsWith('/admin') || pathname.startsWith('/auth/guest-gate') || pathname.startsWith('/mypage') || isOrderProgressVisible
   
   if (shouldHide) {
     return null

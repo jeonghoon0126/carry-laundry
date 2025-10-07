@@ -1,13 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { getUserOrderHistory, OrderHistoryItem } from '@/lib/actions/orders'
 import { formatOrderDate, maskPhone, shortAddress } from '@/lib/utils/format'
 import { useRouter } from 'next/navigation'
 import EmptyState from '@/components/common/EmptyState'
 import { SkeletonOrderCard } from '@/components/common/Skeleton'
 import Badge from '@/components/ui/Badge'
-import { X, AlertTriangle } from 'lucide-react'
+import { X, AlertTriangle, Play, CheckCircle, Truck, Clock, Camera } from 'lucide-react'
+import { ORDER_STATUS_INFO, getOrderProgress, getNextStepInfo } from '@/lib/utils/orderStatus'
 
 interface OrderHistoryState {
   orders: OrderHistoryItem[]
@@ -224,18 +226,110 @@ export default function OrderHistory() {
   const renderOrderStatus = (order: OrderHistoryItem) => {
     console.log(`Order ${order.id} status:`, order.status, 'paid:', order.paid)
     
-    // 주문이 취소된 경우
-    if (order.status === 'cancelled') {
-      return <Badge variant="danger">주문취소</Badge>
+    // status 필드가 있으면 그것을 우선 사용
+    if (order.status) {
+      switch (order.status) {
+        case 'cancelled':
+          return <Badge variant="danger">주문취소</Badge>
+        case 'pending':
+          return <Badge variant="warning">주문접수</Badge>
+        case 'processing':
+          return <Badge variant="info">처리중</Badge>
+        case 'completed':
+          return <Badge variant="success">세탁완료</Badge>
+        case 'delivered':
+          return <Badge variant="success">배송완료</Badge>
+        default:
+          return <Badge variant="success">결제완료</Badge>
+      }
     }
     
-    // 결제가 완료된 경우
+    // status가 없으면 paid 필드 사용 (기존 로직)
     if (order.paid) {
       return <Badge variant="success">결제완료</Badge>
     }
     
-    // 결제가 안된 경우도 결제완료로 표시 (결제대기 상태 제거)
-    return <Badge variant="success">결제완료</Badge>
+    return <Badge variant="warning">결제대기</Badge>
+  }
+
+  const renderOrderProgress = (order: OrderHistoryItem) => {
+    if (!order.status || order.status === 'cancelled') return null
+    
+    const progress = getOrderProgress(order.status as any)
+    const nextStep = getNextStepInfo(order.status as any)
+    
+    return (
+      <div className="mt-4 space-y-3">
+        {/* Progress Bar */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-700">진행률</span>
+            <span className="text-sm text-gray-600">{progress}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+        
+        {/* Current Status */}
+        <div className="bg-blue-50 rounded-lg p-3">
+          <div className="flex items-center gap-2 mb-1">
+            <Clock className="w-4 h-4 text-blue-600" />
+            <span className="text-sm font-medium text-blue-900">현재 상태</span>
+          </div>
+          <p className="text-sm text-blue-800">
+            {ORDER_STATUS_INFO[order.status as keyof typeof ORDER_STATUS_INFO]?.description || '처리 중입니다'}
+          </p>
+        </div>
+        
+        {/* Next Step */}
+        {nextStep && (
+          <div className="bg-green-50 rounded-lg p-3">
+            <div className="flex items-center gap-2 mb-1">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span className="text-sm font-medium text-green-900">다음 단계</span>
+            </div>
+            <p className="text-sm text-green-800">{nextStep.nextStatusText}</p>
+            <p className="text-xs text-green-700 mt-1">예상 시간: {nextStep.estimatedTime}</p>
+          </div>
+        )}
+        
+        {/* Photos */}
+        {(order as any).pickup_photo_url || (order as any).delivery_photo_url ? (
+          <div className="bg-gray-50 rounded-lg p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Camera className="w-4 h-4 text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">사진</span>
+            </div>
+            <div className="flex gap-2">
+              {(order as any).pickup_photo_url && (
+                <div className="flex-1">
+                  <img 
+                    src={(order as any).pickup_photo_url} 
+                    alt="수거 사진"
+                    className="w-full h-20 object-cover rounded-lg"
+                  />
+                  <p className="text-xs text-gray-600 text-center mt-1">수거</p>
+                </div>
+              )}
+              {(order as any).delivery_photo_url && (
+                <div className="flex-1">
+                  <img 
+                    src={(order as any).delivery_photo_url} 
+                    alt="배송 사진"
+                    className="w-full h-20 object-cover rounded-lg"
+                  />
+                  <p className="text-xs text-gray-600 text-center mt-1">배송</p>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    )
   }
 
   // 취소 가능한 주문인지 확인
@@ -319,7 +413,10 @@ export default function OrderHistory() {
                     주문번호
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    결제상태
+                    주문상태
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    진행상황
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     결제금액
@@ -350,6 +447,22 @@ export default function OrderHistory() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       {renderOrderStatus(order)}
                     </td>
+                    <td className="px-6 py-4">
+                      {order.status && order.status !== 'cancelled' && (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-600">진행률</span>
+                            <span className="text-xs text-gray-600">{getOrderProgress(order.status as any)}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-1.5">
+                            <div 
+                              className="bg-gradient-to-r from-blue-500 to-blue-600 h-1.5 rounded-full transition-all duration-500"
+                              style={{ width: `${getOrderProgress(order.status as any)}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                       <span className={order.paid === true ? "text-gray-900 font-semibold" : "text-gray-500"}>
                         {order.payment_amount ? order.payment_amount.toLocaleString("ko-KR") + "원" : "-"}
@@ -357,13 +470,35 @@ export default function OrderHistory() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
                       {canCancelOrder(order) && (
-                        <button
+                        <motion.button
                           onClick={() => handleCancelClick(order.id.toString(), `#${order.id}`)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                          className="group relative inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 bg-gradient-to-r from-red-50 to-red-100 rounded-lg hover:from-red-100 hover:to-red-200 transition-all duration-200 overflow-hidden"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                         >
-                          <X className="w-3 h-3" />
-                          취소
-                        </button>
+                          {/* Background glow effect */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-red-200 to-red-300 opacity-0 group-hover:opacity-30 transition-opacity duration-300 rounded-lg"></div>
+                          
+                          {/* Icon with premium animation */}
+                          <motion.div
+                            animate={{ 
+                              rotate: [0, -5, 5, -5, 0],
+                              transition: { 
+                                duration: 2, 
+                                repeat: Infinity, 
+                                ease: "easeInOut" 
+                              }
+                            }}
+                            whileHover={{ scale: 1.2 }}
+                          >
+                            <X className="w-3 h-3 relative z-10" />
+                          </motion.div>
+                          
+                          <span className="relative z-10">취소</span>
+                          
+                          {/* Shimmer effect */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500 rounded-lg"></div>
+                        </motion.button>
                       )}
                     </td>
                   </tr>
@@ -400,16 +535,41 @@ export default function OrderHistory() {
                 </div>
               </div>
               
+              {/* Order Progress */}
+              {renderOrderProgress(order)}
+              
               {/* Mobile Action Button */}
               {canCancelOrder(order) && (
                 <div className="pt-3 border-t border-gray-100">
-                  <button
+                  <motion.button
                     onClick={() => handleCancelClick(order.id.toString(), `#${order.id}`)}
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                    className="group relative w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-gradient-to-r from-red-50 to-red-100 rounded-lg hover:from-red-100 hover:to-red-200 transition-all duration-200 overflow-hidden"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    <X className="w-4 h-4" />
-                    주문 취소
-                  </button>
+                    {/* Background glow effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-red-200 to-red-300 opacity-0 group-hover:opacity-30 transition-opacity duration-300 rounded-lg"></div>
+                    
+                    {/* Icon with premium animation */}
+                    <motion.div
+                      animate={{ 
+                        rotate: [0, -5, 5, -5, 0],
+                        transition: { 
+                          duration: 2, 
+                          repeat: Infinity, 
+                          ease: "easeInOut" 
+                        }
+                      }}
+                      whileHover={{ scale: 1.2 }}
+                    >
+                      <X className="w-4 h-4 relative z-10" />
+                    </motion.div>
+                    
+                    <span className="relative z-10">주문 취소</span>
+                    
+                    {/* Shimmer effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500 rounded-lg"></div>
+                  </motion.button>
                 </div>
               )}
             </div>

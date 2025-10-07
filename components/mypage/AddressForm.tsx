@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { X, Save, MapPin, Search } from 'lucide-react'
 import AddressSearch from '@/components/order/AddressSearch'
 
@@ -103,7 +104,12 @@ export default function AddressForm({ address, onClose }: AddressFormProps) {
             onClick={onClose}
             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <X className="w-5 h-5" />
+            <motion.div
+              whileHover={{ scale: 1.2, rotate: 90 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <X className="w-5 h-5" />
+            </motion.div>
           </button>
         </div>
 
@@ -142,7 +148,15 @@ export default function AddressForm({ address, onClose }: AddressFormProps) {
                 onClick={() => setShowAddressSearch(true)}
                 className="px-4 py-3 bg-[#13C2C2] text-white rounded-lg hover:bg-[#0FA8A8] transition-colors flex items-center gap-2"
               >
-                <Search className="w-4 h-4" />
+                <motion.div
+                  animate={{ 
+                    rotate: [0, 10, -10, 0],
+                    transition: { duration: 2, repeat: Infinity, repeatDelay: 1 }
+                  }}
+                  whileHover={{ scale: 1.2, rotate: [0, -15, 15, 0] }}
+                >
+                  <Search className="w-4 h-4" />
+                </motion.div>
                 검색
               </button>
             </div>
@@ -242,7 +256,15 @@ export default function AddressForm({ address, onClose }: AddressFormProps) {
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               ) : (
                 <>
-                  <Save className="w-4 h-4" />
+                  <motion.div
+                    animate={{ 
+                      scale: [1, 1.1, 1],
+                      transition: { duration: 1.5, repeat: Infinity, repeatDelay: 2 }
+                    }}
+                    whileHover={{ scale: 1.2, rotate: [0, -10, 10, 0] }}
+                  >
+                    <Save className="w-4 h-4" />
+                  </motion.div>
                   {address ? '수정하기' : '추가하기'}
                 </>
               )}

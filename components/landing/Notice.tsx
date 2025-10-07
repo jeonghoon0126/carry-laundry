@@ -23,7 +23,16 @@ export default function Notice() {
           className="bg-yellow-50 border border-yellow-200 rounded-xl p-6"
         >
           <div className="flex items-center gap-2 mb-4">
-            <AlertCircle className="w-5 h-5 text-yellow-600" />
+            <motion.div
+              animate={{ 
+                scale: [1, 1.1, 1],
+                rotate: [0, 5, -5, 0],
+                transition: { duration: 2, repeat: Infinity, repeatDelay: 1 }
+              }}
+              whileHover={{ scale: 1.2, rotate: [0, -10, 10, 0] }}
+            >
+              <AlertCircle className="w-5 h-5 text-yellow-600" />
+            </motion.div>
             <h2 className="text-lg font-bold text-gray-900" style={{ fontFamily: 'Pretendard, sans-serif' }}>꼭 확인해주세요</h2>
           </div>
 
@@ -44,7 +53,15 @@ export default function Notice() {
           </ul>
 
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Phone className="w-4 h-4" />
+            <motion.div
+              animate={{ 
+                rotate: [0, 15, -15, 0],
+                transition: { duration: 3, repeat: Infinity, ease: "easeInOut" }
+              }}
+              whileHover={{ scale: 1.2, rotate: [0, -20, 20, 0] }}
+            >
+              <Phone className="w-4 h-4" />
+            </motion.div>
             <span style={{ fontFamily: 'Pretendard, sans-serif' }}>고객문의: 010-9432-0293</span>
           </div>
         </motion.div>

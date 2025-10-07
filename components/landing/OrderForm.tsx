@@ -283,7 +283,16 @@ export default function OrderForm() {
                 animate={{ scale: 1, opacity: 1 }}
                 className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center"
               >
-                <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                <motion.div
+                  animate={{ 
+                    scale: [1, 1.2, 1],
+                    rotate: [0, 10, -10, 0],
+                    transition: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+                  }}
+                  whileHover={{ scale: 1.3, rotate: [0, -15, 15, 0] }}
+                >
+                  <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                </motion.div>
                 <span className="text-green-800 font-medium" style={{ fontFamily: 'Pretendard, sans-serif' }}>주문이 접수되었습니다!</span>
               </motion.div>
             )}
@@ -391,7 +400,16 @@ export default function OrderForm() {
                   </>
                 ) : (
                   <>
-                    <CreditCard className="w-5 h-5 mr-2" />
+                    <motion.div
+                      animate={{ 
+                        scale: [1, 1.1, 1],
+                        rotate: [0, 5, -5, 0],
+                        transition: { duration: 1.5, repeat: Infinity, repeatDelay: 2 }
+                      }}
+                      whileHover={{ scale: 1.2, rotate: [0, -10, 10, 0] }}
+                    >
+                      <CreditCard className="w-5 h-5 mr-2" />
+                    </motion.div>
                     결제하기
                   </>
                 )}

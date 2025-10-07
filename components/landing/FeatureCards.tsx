@@ -8,33 +8,41 @@ const features = [
     icon: Truck,
     title: '당일배송',
     description: '수거부터 배송까지 당일 완료',
-    color: 'blue'
+    color: 'blue',
+    gradient: 'from-blue-500 to-blue-700',
+    shadow: 'shadow-blue-200'
   },
   {
     icon: BadgeCheck,
     title: '전문 퀄리티',
     description: '전문 세탁 시설에서 안전하게',
-    color: 'green'
+    color: 'green',
+    gradient: 'from-green-500 to-green-700',
+    shadow: 'shadow-green-200'
   },
   {
     icon: PiggyBank,
     title: '합리적 가격',
     description: '가장 저렴한 세탁 비용',
-    color: 'yellow'
+    color: 'yellow',
+    gradient: 'from-yellow-500 to-yellow-700',
+    shadow: 'shadow-yellow-200'
   },
   {
     icon: Sparkles,
     title: '개별 포장',
     description: '깨끗한 개별 포장으로 배송',
-    color: 'purple'
+    color: 'purple',
+    gradient: 'from-purple-500 to-purple-700',
+    shadow: 'shadow-purple-200'
   }
 ]
 
 const colorClasses = {
-  blue: 'bg-blue-50 text-blue-600',
-  green: 'bg-green-50 text-green-600',
-  yellow: 'bg-yellow-50 text-yellow-600',
-  purple: 'bg-purple-50 text-purple-600'
+  blue: 'bg-gradient-to-br from-blue-50 to-blue-100 text-blue-700 border-blue-200',
+  green: 'bg-gradient-to-br from-green-50 to-green-100 text-green-700 border-green-200',
+  yellow: 'bg-gradient-to-br from-yellow-50 to-yellow-100 text-yellow-700 border-yellow-200',
+  purple: 'bg-gradient-to-br from-purple-50 to-purple-100 text-purple-700 border-purple-200'
 }
 
 export default function FeatureCards() {
@@ -51,18 +59,89 @@ export default function FeatureCards() {
           {features.map((feature, index) => (
             <motion.div
               key={feature.title}
-              initial={{ y: 20, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              transition={{ delay: index * 0.1, duration: 0.5 }}
+              initial={{ y: 30, opacity: 0, scale: 0.9 }}
+              whileInView={{ y: 0, opacity: 1, scale: 1 }}
+              transition={{ delay: index * 0.15, duration: 0.6, type: "spring", stiffness: 100 }}
               viewport={{ once: true }}
-              whileHover={{ y: -2 }}
-              className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-center"
+              whileHover={{ 
+                y: -8, 
+                scale: 1.05,
+                transition: { duration: 0.3, type: "spring", stiffness: 300 }
+              }}
+              className="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg border border-gray-200 text-center relative overflow-hidden group hover:shadow-2xl transition-all duration-500"
             >
-              <div className={`w-12 h-12 rounded-full ${colorClasses[feature.color as keyof typeof colorClasses]} flex items-center justify-center mx-auto mb-3`}>
-                <feature.icon className="w-6 h-6" />
+              {/* Background glow effect */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500 rounded-2xl`}></div>
+              
+              {/* Icon container with premium animation */}
+              <motion.div 
+                className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mx-auto mb-4 shadow-lg ${feature.shadow} group-hover:shadow-xl transition-all duration-300`}
+                whileHover={{ 
+                  rotate: [0, -5, 5, -5, 0],
+                  transition: { duration: 0.5 }
+                }}
+              >
+                {/* Shimmer effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 rounded-2xl"></div>
+                
+                {/* Icon with bounce animation */}
+                <motion.div
+                  animate={{ 
+                    y: [0, -2, 0],
+                    transition: { 
+                      duration: 2, 
+                      repeat: Infinity, 
+                      ease: "easeInOut" 
+                    }
+                  }}
+                >
+                  <feature.icon className="w-8 h-8 text-white" />
+                </motion.div>
+                
+                {/* Pulse ring */}
+                <div className="absolute inset-0 rounded-2xl bg-white/20 animate-ping opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </motion.div>
+              
+              {/* Title with gradient text */}
+              <motion.h3 
+                className="font-bold text-lg bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2"
+                style={{ fontFamily: 'Pretendard, sans-serif' }}
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.2 }}
+              >
+                {feature.title}
+              </motion.h3>
+              
+              {/* Description with fade animation */}
+              <motion.p 
+                className="text-sm text-gray-600 leading-relaxed"
+                style={{ fontFamily: 'Pretendard, sans-serif' }}
+                initial={{ opacity: 0.7 }}
+                whileHover={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                {feature.description}
+              </motion.p>
+              
+              {/* Decorative dots */}
+              <div className="flex justify-center gap-1 mt-3">
+                {[0, 1, 2].map((dot) => (
+                  <motion.div
+                    key={dot}
+                    className={`w-2 h-2 rounded-full bg-gradient-to-r ${feature.gradient}`}
+                    animate={{
+                      scale: [1, 1.2, 1],
+                      opacity: [0.5, 1, 0.5],
+                      transition: {
+                        duration: 1.5,
+                        repeat: Infinity,
+                        delay: dot * 0.2,
+                        ease: "easeInOut"
+                      }
+                    }}
+                  />
+                ))}
               </div>
-              <h3 className="font-semibold text-gray-900 mb-1" style={{ fontFamily: 'Pretendard, sans-serif' }}>{feature.title}</h3>
-              <p className="text-sm text-gray-600" style={{ fontFamily: 'Pretendard, sans-serif' }}>{feature.description}</p>
             </motion.div>
           ))}
         </motion.div>

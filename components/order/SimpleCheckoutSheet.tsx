@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
 import { MapPin, MessageSquare } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
@@ -117,26 +118,7 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
       if (tossPaymentsError || !isTossScriptLoaded) {
         throw new Error('Toss Payments not ready');
       }
-      // Debug order creation first
-      console.log('Debugging order creation...')
-      const debugResponse = await fetch('/api/debug/order-creation', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: (nickname && nickname.trim()) || '고객',
-          phone,
-          address: shippingAddress?.address1 || address,
-        })
-      })
-      
-      const debugResult = await debugResponse.json()
-      console.log('Debug result:', debugResult)
-      
-      if (!debugResponse.ok) {
-        throw new Error(`Debug failed: ${debugResult.error} (step: ${debugResult.step})`)
-      }
+      // Create order directly (removed debug API call)
 
       // Create order
       const orderResponse = await fetch('/api/orders', {
@@ -314,7 +296,24 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
       {!hideAddressInput && (
         <div className="rounded-2xl bg-white shadow-sm p-4">
           <div className="flex items-center gap-2 mb-3">
-            <MapPin className="w-5 h-5 text-[#13C2C2]" />
+            <motion.div
+              animate={{ 
+                y: [0, -2, 0],
+                transition: { 
+                  duration: 2, 
+                  repeat: Infinity, 
+                  ease: "easeInOut" 
+                }
+              }}
+              whileHover={{ scale: 1.2, rotate: [0, -5, 5, 0] }}
+              className="relative"
+            >
+              <div className="w-6 h-6 bg-gradient-to-br from-[#13C2C2] to-[#0FA8A8] rounded-lg flex items-center justify-center shadow-lg">
+                <MapPin className="w-4 h-4 text-white" />
+              </div>
+              {/* Pulse ring */}
+              <div className="absolute inset-0 bg-[#13C2C2] rounded-lg animate-ping opacity-20"></div>
+            </motion.div>
             <label className="text-sm font-medium text-gray-900">배송지</label>
           </div>
           <input
@@ -363,7 +362,25 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
       {/* Special Requests */}
       <div className="rounded-2xl bg-white shadow-sm p-4">
         <div className="flex items-center gap-2 mb-3">
-          <MessageSquare className="w-5 h-5 text-[#13C2C2]" />
+          <motion.div
+            animate={{ 
+              y: [0, -2, 0],
+              transition: { 
+                duration: 2, 
+                repeat: Infinity, 
+                ease: "easeInOut",
+                delay: 0.5
+              }
+            }}
+            whileHover={{ scale: 1.2, rotate: [0, -5, 5, 0] }}
+            className="relative"
+          >
+            <div className="w-6 h-6 bg-gradient-to-br from-[#13C2C2] to-[#0FA8A8] rounded-lg flex items-center justify-center shadow-lg">
+              <MessageSquare className="w-4 h-4 text-white" />
+            </div>
+            {/* Pulse ring */}
+            <div className="absolute inset-0 bg-[#13C2C2] rounded-lg animate-ping opacity-20" style={{ animationDelay: '0.5s' }}></div>
+          </motion.div>
           <h3 className="font-medium text-gray-900">요청사항</h3>
         </div>
         <textarea

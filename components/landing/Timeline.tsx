@@ -55,9 +55,26 @@ export default function Timeline() {
                 viewport={{ once: true }}
                 className="flex items-center gap-4"
               >
-                <div className={`w-10 h-10 rounded-full ${colorClasses[step.color as keyof typeof colorClasses]} flex items-center justify-center flex-shrink-0`}>
+                <motion.div 
+                  className={`w-10 h-10 rounded-full ${colorClasses[step.color as keyof typeof colorClasses]} flex items-center justify-center flex-shrink-0`}
+                  animate={{ 
+                    rotate: step.icon === Clock ? [0, 360] : [0, 5, -5, 0],
+                    scale: step.icon === Package ? [1, 1.1, 1] : [1, 1.05, 1],
+                    transition: { 
+                      duration: step.icon === Clock ? 8 : 2, 
+                      repeat: Infinity, 
+                      ease: step.icon === Clock ? "linear" : "easeInOut",
+                      repeatDelay: step.icon === Clock ? 0 : 1
+                    }
+                  }}
+                  whileHover={{ 
+                    scale: 1.2, 
+                    rotate: [0, -10, 10, 0],
+                    transition: { duration: 0.3 }
+                  }}
+                >
                   <step.icon className="w-5 h-5" />
-                </div>
+                </motion.div>
                 <div className="flex-1">
                   <h3 className="font-semibold text-gray-900" style={{ fontFamily: 'Pretendard, sans-serif' }}>{step.title}</h3>
                   <p className="text-sm text-gray-600" style={{ fontFamily: 'Pretendard, sans-serif' }}>{step.time}</p>
