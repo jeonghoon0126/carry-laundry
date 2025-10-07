@@ -1,13 +1,11 @@
-import { Metadata } from 'next'
+'use client'
+
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { CheckCircle, User, Home } from 'lucide-react'
 import Button from '@/components/ui/Button'
 
-export const metadata: Metadata = {
-  title: '결제 완료 - carry',
-  description: '결제가 성공적으로 완료되었습니다.'
-}
+// Metadata는 layout.tsx에서 처리됩니다
 
 export default function OrderCompletedPage() {
   return (
