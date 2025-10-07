@@ -58,13 +58,32 @@ export async function POST(
       console.error('Error fetching order:', fetchError)
       return NextResponse.json({ 
         error: 'Order not found or access denied',
-        details: fetchError.message 
+        details: fetchError.message,
+        debug: {
+          orderId,
+          userId,
+          error: fetchError
+        }
       }, { status: 404 })
     }
 
     if (!order) {
       console.error('No order found for ID:', orderId, 'User ID:', userId)
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+      
+      // 사용자의 모든 주문 조회해서 디버그 정보 제공
+      const { data: userOrders } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('user_id', userId)
+      
+      return NextResponse.json({ 
+        error: 'Order not found or you do not have permission to cancel this order',
+        debug: {
+          requestedOrderId: orderId,
+          userId,
+          userOrderIds: userOrders?.map(o => o.id) || []
+        }
+      }, { status: 404 })
     }
 
     console.log('Order details:', {

@@ -117,8 +117,21 @@ export default function OrderHistory() {
 
       if (!response.ok) {
         const errorData = await response.json()
+        console.error('Cancel API error response:', errorData)
+        
+        // 디버그 정보가 있으면 더 자세한 메시지 제공
+        if (errorData.debug) {
+          console.log('Debug info:', errorData.debug)
+          if (errorData.debug.userOrderIds) {
+            console.log('Available order IDs for user:', errorData.debug.userOrderIds)
+          }
+        }
+        
         throw new Error(errorData.error || '주문 취소에 실패했습니다')
       }
+
+      const result = await response.json()
+      console.log('Cancel success:', result)
 
       // 주문 목록 새로고침
       await loadOrders()
@@ -126,10 +139,23 @@ export default function OrderHistory() {
       // 모달 닫기
       handleCancelModalClose()
       
-      alert('주문이 성공적으로 취소되었습니다')
+      alert(result.message || '주문이 성공적으로 취소되었습니다')
     } catch (error) {
       console.error('Error cancelling order:', error)
-      alert(error instanceof Error ? error.message : '주문 취소 중 오류가 발생했습니다')
+      
+      let errorMessage = '주문 취소 중 오류가 발생했습니다'
+      if (error instanceof Error) {
+        errorMessage = error.message
+        
+        // 특정 에러에 대한 사용자 친화적 메시지
+        if (error.message.includes('Order not found')) {
+          errorMessage = '해당 주문을 찾을 수 없거나 취소할 권한이 없습니다.'
+        } else if (error.message.includes('Unauthorized')) {
+          errorMessage = '로그인이 필요합니다.'
+        }
+      }
+      
+      alert(errorMessage)
     } finally {
       setCancelModal(prev => ({ ...prev, isCancelling: false }))
     }

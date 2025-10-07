@@ -25,14 +25,25 @@ export async function GET() {
       .from('orders')
       .select('id, user_id, paid, created_at')
       .eq('user_id', userId)
-      .limit(5)
+      .limit(10)
 
     console.log('Test query result:', { testData, testError })
+
+    // Check if order ID 60 exists and belongs to whom
+    const { data: order60, error: order60Error } = await supabase
+      .from('orders')
+      .select('id, user_id, paid, created_at, name')
+      .eq('id', 60)
+      .single()
+
+    console.log('Order 60 check:', { order60, order60Error })
 
     return NextResponse.json({
       success: true,
       userId,
       orders: testData,
+      order60: order60,
+      order60Error: order60Error?.message,
       error: testError?.message,
       timestamp: new Date().toISOString()
     })
