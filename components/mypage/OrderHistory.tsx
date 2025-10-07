@@ -339,6 +339,11 @@ export default function OrderHistory() {
       return false
     }
     
+    // 배송 완료(delivered) 이상의 상태는 취소 불가
+    if (order.status === 'delivered') {
+      return false
+    }
+    
     // 24시간 이내 주문만 취소 가능
     const isWithin24Hours = new Date(order.created_at) > new Date(Date.now() - 24 * 60 * 60 * 1000)
     return isWithin24Hours

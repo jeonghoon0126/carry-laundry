@@ -21,13 +21,23 @@ export default function HomePage() {
   console.log('HomePage Debug:', {
     showOrderProgress,
     hasActiveOrder,
-    sessionUser: !!session?.user
+    sessionUser: !!session?.user,
+    shouldHideCTA: hasActiveOrder && !!session?.user
   })
 
   // 바텀시트 상태가 변경될 때마다 전역 상태 동기화
   useEffect(() => {
     setIsOrderProgressVisible(showOrderProgress)
   }, [showOrderProgress, setIsOrderProgressVisible])
+
+  // 활성 주문이 있을 때도 CTA 숨기기 (주문 진행상황 버튼이 보일 때)
+  useEffect(() => {
+    if (hasActiveOrder && session?.user) {
+      setIsOrderProgressVisible(true)
+    } else {
+      setIsOrderProgressVisible(showOrderProgress)
+    }
+  }, [hasActiveOrder, session?.user, showOrderProgress, setIsOrderProgressVisible])
 
   // 로그인된 사용자의 활성 주문 확인
   useEffect(() => {

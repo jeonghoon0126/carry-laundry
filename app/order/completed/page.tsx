@@ -1,11 +1,12 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
-import { CheckCircle } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { CheckCircle, User, Home } from 'lucide-react'
 import Button from '@/components/ui/Button'
 
 export const metadata: Metadata = {
-  title: '주문 완료 - carry',
-  description: '주문이 성공적으로 완료되었습니다.'
+  title: '결제 완료 - carry',
+  description: '결제가 성공적으로 완료되었습니다.'
 }
 
 export default function OrderCompletedPage() {
@@ -21,11 +22,10 @@ export default function OrderCompletedPage() {
             
             {/* Success Message */}
             <h1 className="text-3xl font-semibold tracking-tight text-gray-900 mb-2">
-              🎉 결제가 완료되었습니다!
+              결제 완료
             </h1>
             <p className="text-gray-600 text-sm leading-relaxed">
-              주문과 결제가 성공적으로 완료되었습니다.<br />
-              <span className="font-medium text-[#13C2C2]">세탁물을 안전하게 수거하여 깨끗하게 세탁해드리겠습니다.</span>
+              <span className="font-medium text-[#13C2C2]">세탁물은 익일 오전 9시에 수거해서, 익일 오후 11시 전에 배송 돼요</span>
             </p>
           </div>
 
@@ -38,25 +38,63 @@ export default function OrderCompletedPage() {
             <p className="text-xl font-semibold text-gray-900">100원</p>
           </div>
 
-          {/* CTA Buttons */}
+          {/* CTA Buttons - 상하 배치 */}
           <div className="space-y-3">
-            <Button
-              variant="primary"
-              as="a"
-              href="/mypage"
-              className="w-full justify-center"
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
             >
-              마이페이지로 이동
-            </Button>
+              <Link href="/mypage">
+                <motion.button
+                  className="group relative w-full h-12 bg-gradient-to-r from-[#13C2C2] to-[#0FA8A8] text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <motion.div
+                    animate={{ 
+                      rotate: [0, 5, -5, 0],
+                      transition: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+                    }}
+                    whileHover={{ scale: 1.2, rotate: [0, -10, 10, 0] }}
+                  >
+                    <User className="w-5 h-5" />
+                  </motion.div>
+                  마이페이지
+                  
+                  {/* Shimmer effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 rounded-xl"></div>
+                </motion.button>
+              </Link>
+            </motion.div>
 
-            <Button
-              variant="secondary"
-              as="a"
-              href="/home"
-              className="w-full justify-center"
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
             >
-              홈으로 이동
-            </Button>
+              <Link href="/home">
+                <motion.button
+                  className="group relative w-full h-12 bg-white border-2 border-[#13C2C2] text-[#13C2C2] rounded-xl font-semibold text-base flex items-center justify-center gap-2 hover:bg-[#13C2C2] hover:text-white transition-all duration-300 shadow-lg hover:shadow-xl overflow-hidden"
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <motion.div
+                    animate={{ 
+                      rotate: [0, -5, 5, 0],
+                      transition: { duration: 2.5, repeat: Infinity, ease: "easeInOut" }
+                    }}
+                    whileHover={{ scale: 1.2, rotate: [0, 10, -10, 0] }}
+                  >
+                    <Home className="w-5 h-5" />
+                  </motion.div>
+                  홈으로 가기
+                  
+                  {/* Shimmer effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#13C2C2]/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 rounded-xl"></div>
+                </motion.button>
+              </Link>
+            </motion.div>
           </div>
 
           {/* Additional Info */}
