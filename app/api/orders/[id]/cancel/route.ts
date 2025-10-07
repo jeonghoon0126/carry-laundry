@@ -8,25 +8,43 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+    console.log('=== ORDER CANCELLATION START ===')
+    console.log('Request params:', params)
+    
     const session = await getServerSession(authOptions)
     console.log('Cancel API - Session:', session)
     
     if (!session?.user) {
+      console.log('No session found')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const userId = (session.user as any).id
+    console.log('User ID:', userId)
     if (!userId) {
+      console.log('No user ID in session')
       return NextResponse.json({ error: 'User ID not found' }, { status: 401 })
     }
 
     const orderId = params.id
-    const body = await request.json()
+    console.log('Order ID:', orderId)
+    
+    let body
+    try {
+      body = await request.json()
+      console.log('Request body:', body)
+    } catch (e) {
+      console.log('No request body, using default reason')
+      body = {}
+    }
     const { reason } = body
 
+    console.log('Getting Supabase client...')
     const supabase = getSupabaseServer()
+    console.log('Supabase client obtained')
     
     // 주문 정보 조회
+    console.log('Fetching order from database...')
     const { data: order, error: fetchError } = await supabase
       .from('orders')
       .select('*')
@@ -34,8 +52,18 @@ export async function POST(
       .eq('user_id', userId)
       .single()
 
-    if (fetchError || !order) {
+    console.log('Order fetch result:', { order, fetchError })
+
+    if (fetchError) {
       console.error('Error fetching order:', fetchError)
+      return NextResponse.json({ 
+        error: 'Order not found or access denied',
+        details: fetchError.message 
+      }, { status: 404 })
+    }
+
+    if (!order) {
+      console.error('No order found for ID:', orderId, 'User ID:', userId)
       return NextResponse.json({ error: 'Order not found' }, { status: 404 })
     }
 
@@ -89,6 +117,8 @@ export async function POST(
     }
 
     // 주문 상태를 취소로 업데이트
+    console.log('Updating order status to cancelled...')
+    
     const updateData: any = {
       cancelled_at: new Date().toISOString(),
       cancel_reason: reason || '고객 요청에 의한 취소',
@@ -98,7 +128,12 @@ export async function POST(
     // status 필드가 존재하는 경우에만 추가
     if (order.status !== undefined) {
       updateData.status = 'cancelled'
+      console.log('Adding status field to update')
+    } else {
+      console.log('Status field not found, skipping status update')
     }
+    
+    console.log('Update data:', updateData)
     
     const { data: updatedOrder, error: updateError } = await supabase
       .from('orders')
@@ -108,9 +143,19 @@ export async function POST(
       .select()
       .single()
 
+    console.log('Update result:', { updatedOrder, updateError })
+
     if (updateError) {
       console.error('Error updating order:', updateError)
-      return NextResponse.json({ error: 'Failed to cancel order' }, { status: 500 })
+      return NextResponse.json({ 
+        error: 'Failed to cancel order',
+        details: updateError.message 
+      }, { status: 500 })
+    }
+
+    if (!updatedOrder) {
+      console.error('No order returned after update')
+      return NextResponse.json({ error: 'Order update failed' }, { status: 500 })
     }
 
     return NextResponse.json({ 
@@ -121,10 +166,19 @@ export async function POST(
         : 'Order cancelled successfully (payment cancellation may have failed)'
     })
   } catch (error) {
+    console.error('=== ORDER CANCELLATION ERROR ===')
     console.error('Error in order cancellation:', error)
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      name: error instanceof Error ? error.name : 'Unknown',
+      cause: error instanceof Error ? error.cause : undefined
+    })
+    
     return NextResponse.json({ 
       error: 'Internal server error',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
     }, { status: 500 })
   }
 }
