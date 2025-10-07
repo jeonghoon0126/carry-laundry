@@ -162,8 +162,8 @@ export default function AdminPage() {
 
   // 취소 가능한 주문인지 확인 (어드민은 모든 결제완료 주문 취소 가능)
   const canCancelOrder = (order: Order) => {
-    // 결제가 완료된 주문만 취소 가능
-    return order.paid === true
+    // 결제가 완료되었고 취소되지 않은 주문만 취소 가능
+    return order.paid === true && order.status !== 'cancelled'
   }
 
   const filtered = (orders ?? []).filter(o => {
@@ -414,11 +414,18 @@ export default function AdminPage() {
                         )}
                       </div>
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                        o.paid === true 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
+                        o.status === 'cancelled'
+                          ? 'bg-gray-100 text-gray-800'
+                          : o.paid === true 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
                       }`}>
-                        {o.paid === true ? '결제완료' : '미결제'}
+                        {o.status === 'cancelled' 
+                          ? '주문취소' 
+                          : o.paid === true 
+                            ? '결제완료' 
+                            : '미결제'
+                        }
                       </span>
                     </div>
                     
@@ -540,11 +547,19 @@ export default function AdminPage() {
                       </td>
                       <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                          o.paid === true 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
+                          o.status === 'cancelled'
+                            ? 'bg-gray-100 text-gray-800'
+                            : o.paid === true 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
                         }`}>
-                          {o.paid === true ? (
+                          {o.status === 'cancelled' ? (
+                            <>
+                              <X className="w-3 h-3 mr-1" />
+                              <span className="hidden lg:inline">주문취소</span>
+                              <span className="lg:hidden">취소</span>
+                            </>
+                          ) : o.paid === true ? (
                             <>
                               <CreditCard className="w-3 h-3 mr-1" />
                               <span className="hidden lg:inline">결제완료</span>
