@@ -263,18 +263,18 @@ export default function OrderForm() {
 
   return (
     <>
-      <section id="order-form" className="py-12 px-4 bg-white">
+      <section id="order-form" className="py-8 sm:py-12 px-4 bg-white">
         <div className="max-w-md mx-auto">
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             whileInView={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.5 }}
             viewport={{ once: true }}
-            className="bg-white rounded-xl shadow-lg border border-gray-200 p-6"
+            className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 sm:p-6"
           >
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2" style={{ fontFamily: 'Pretendard, sans-serif' }}>세탁 주문</h2>
-              <p className="text-gray-600" style={{ fontFamily: 'Pretendard, sans-serif' }}>간단한 정보 입력으로 빠르게 주문하세요</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2" style={{ fontFamily: 'Pretendard, sans-serif' }}>세탁 주문</h2>
+              <p className="text-sm sm:text-base text-gray-600" style={{ fontFamily: 'Pretendard, sans-serif' }}>간단한 정보 입력으로 빠르게 주문하세요</p>
             </div>
 
             {showSuccess && (
@@ -295,7 +295,7 @@ export default function OrderForm() {
                 </label>
                 <input
                   {...register('name')}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
                   placeholder="이름을 입력하세요"
                   style={{ fontFamily: 'Pretendard, sans-serif' }}
                 />
@@ -310,7 +310,7 @@ export default function OrderForm() {
                 </label>
                 <input
                   {...register('phone')}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
                   placeholder="010-1234-5678"
                   style={{ fontFamily: 'Pretendard, sans-serif' }}
                 />
@@ -323,17 +323,17 @@ export default function OrderForm() {
                 <label className="block text-sm font-medium text-gray-700 mb-2" style={{ fontFamily: 'Pretendard, sans-serif' }}>
                   주소 *
                 </label>
-                <div className="flex gap-2 mb-2">
+                <div className="flex flex-col sm:flex-row gap-2 mb-2">
                   <input
                     {...register('address')}
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="flex-1 px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
                     placeholder="주소를 검색하거나 입력하세요"
                     style={{ fontFamily: 'Pretendard, sans-serif' }}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPostcode(true)}
-                    className="px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm sm:text-base whitespace-nowrap"
                     style={{ fontFamily: 'Pretendard, sans-serif' }}
                   >
                     주소 검색
@@ -341,7 +341,7 @@ export default function OrderForm() {
                 </div>
                 <input
                   {...register('buildingDetail')}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
                   placeholder="상세주소 (동/호수 등)"
                   style={{ fontFamily: 'Pretendard, sans-serif' }}
                 />
@@ -376,7 +376,7 @@ export default function OrderForm() {
               <button
                 type="submit"
                 disabled={isSubmitting || isProcessingPayment || Boolean(address && address.trim().length >= 5 && !isServiceable && !isValidating)}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center"
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center text-base sm:text-lg"
                 style={{ fontFamily: 'Pretendard, sans-serif' }}
               >
                 {isProcessingPayment ? (

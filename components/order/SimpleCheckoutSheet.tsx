@@ -311,28 +311,28 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
         <label className="block text-sm font-medium text-gray-900 mb-3">
           세탁 수량
         </label>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:border-[#13C2C2] hover:text-[#13C2C2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-gray-200 flex items-center justify-center hover:border-[#13C2C2] hover:text-[#13C2C2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={quantity <= 1}
             >
               <span className="text-lg font-medium">−</span>
             </button>
             <div className="w-16 text-center">
-              <span className="text-2xl font-semibold text-gray-900">{quantity}</span>
+              <span className="text-2xl sm:text-3xl font-semibold text-gray-900">{quantity}</span>
             </div>
             <button
               onClick={() => setQuantity(quantity + 1)}
-              className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:border-[#13C2C2] hover:text-[#13C2C2] transition-colors"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-gray-200 flex items-center justify-center hover:border-[#13C2C2] hover:text-[#13C2C2] transition-colors"
             >
               <span className="text-lg font-medium">+</span>
             </button>
           </div>
-          <div className="text-right">
+          <div className="text-left sm:text-right">
             <div className="text-sm text-gray-500">세탁물 {quantity}건</div>
-            <div className="text-lg font-semibold text-gray-900">
+            <div className="text-lg sm:text-xl font-semibold text-gray-900">
               {(11900 * quantity).toLocaleString()}원
             </div>
           </div>
@@ -463,31 +463,31 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
       {/* Order Summary */}
       <div className="rounded-2xl bg-white shadow-sm p-4">
         <h3 className="font-medium text-gray-900 mb-3">주문 요약</h3>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
+        <div className="space-y-3 text-sm sm:text-base">
+          <div className="flex justify-between items-center">
             <span className="text-gray-600">세탁 서비스 ({quantity}건)</span>
-            <span className="text-gray-900">{(11900 * quantity).toLocaleString()}원</span>
+            <span className="text-gray-900 font-medium">{(11900 * quantity).toLocaleString()}원</span>
           </div>
           <div className="flex justify-between items-center">
-            <div>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
               <span className="text-gray-600">배달비</span>
-              <span className="ml-2 text-xs text-red-500 line-through">3,000원</span>
+              <span className="text-xs text-red-500 line-through">3,000원</span>
             </div>
             <div className="flex items-center gap-1">
               <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">할인</span>
-              <span className="text-gray-900">0원</span>
+              <span className="text-gray-900 font-medium">0원</span>
             </div>
           </div>
-          <div className="bg-green-50 border border-green-200 rounded-lg p-2 mt-2">
-            <div className="flex items-center justify-between text-xs">
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-xs sm:text-sm">
               <span className="text-green-700">🎉 신규 고객 배달비 무료!</span>
               <span className="text-green-600 font-medium">3,000원 할인</span>
             </div>
           </div>
-          <div className="border-t border-gray-200 pt-2 mt-2">
-            <div className="flex justify-between font-semibold">
-              <span className="text-gray-900">총 결제금액</span>
-              <span className="text-gray-900">{(11900 * quantity).toLocaleString()}원</span>
+          <div className="border-t border-gray-200 pt-3">
+            <div className="flex justify-between items-center">
+              <span className="text-base sm:text-lg font-semibold text-gray-900">총 결제금액</span>
+              <span className="text-lg sm:text-xl font-bold text-gray-900">{(11900 * quantity).toLocaleString()}원</span>
             </div>
           </div>
         </div>

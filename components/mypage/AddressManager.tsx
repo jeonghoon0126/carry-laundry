@@ -127,11 +127,11 @@ export default function AddressManager({ onAddressSelect }: AddressManagerProps)
   return (
     <div className="space-y-4">
       {/* 헤더 */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h3 className="text-lg font-semibold text-gray-900">배송지 관리</h3>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-[#13C2C2] text-white rounded-lg hover:bg-[#0FA8A8] transition-colors"
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-[#13C2C2] text-white rounded-lg hover:bg-[#0FA8A8] transition-colors text-sm sm:text-base"
         >
           <Plus className="w-4 h-4" />
           배송지 추가
@@ -157,39 +157,41 @@ export default function AddressManager({ onAddressSelect }: AddressManagerProps)
               key={address.id}
               className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h4 className="font-medium text-gray-900">{address.name}</h4>
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <h4 className="font-medium text-gray-900 truncate">{address.name}</h4>
                     {address.is_default && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#13C2C2]/10 text-[#13C2C2] text-xs rounded-full">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#13C2C2]/10 text-[#13C2C2] text-xs rounded-full flex-shrink-0">
                         <Star className="w-3 h-3 fill-current" />
                         기본
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-600 mb-1">{address.address1}</p>
+                  <p className="text-sm text-gray-600 mb-1 break-words">{address.address1}</p>
                   {address.address2 && (
-                    <p className="text-sm text-gray-500">{address.address2}</p>
+                    <p className="text-sm text-gray-500 break-words">{address.address2}</p>
                   )}
                   {address.address_detail && (
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 mt-1 break-words">
                       상세주소: {address.address_detail}
                     </p>
                   )}
-                  {address.entrance_method && (
-                    <p className="text-xs text-gray-500">
-                      출입방법: {address.entrance_method}
-                    </p>
-                  )}
-                  {address.entrance_note && (
-                    <p className="text-xs text-gray-500">
-                      출입메모: {address.entrance_note}
-                    </p>
-                  )}
+                  <div className="flex flex-col sm:flex-row sm:gap-4 gap-1 mt-2">
+                    {address.entrance_method && (
+                      <p className="text-xs text-gray-500">
+                        출입방법: {address.entrance_method}
+                      </p>
+                    )}
+                    {address.entrance_note && (
+                      <p className="text-xs text-gray-500 break-words">
+                        출입메모: {address.entrance_note}
+                      </p>
+                    )}
+                  </div>
                 </div>
                 
-                <div className="flex items-center gap-2 ml-4">
+                <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                   {onAddressSelect && (
                     <button
                       onClick={() => handleSelect(address)}
