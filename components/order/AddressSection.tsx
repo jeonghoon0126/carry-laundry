@@ -16,25 +16,97 @@ export default function AddressSection({ value, onChange, className }: Props) {
   const [addr, setAddr] = useState<AddressCore | null>(value ?? null);
   const [loading, setLoading] = useState(true);
 
-  // 최초 진입 시 기본 배송지 복원
+  // 최초 진입 시 기본 배송지 복원 (마이페이지 배송지 관리와 연동)
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const a = await loadDefaultAddress();
-      if (!mounted) return;
-      setAddr(a);
-      onChange?.(a ?? null);
-      setLoading(false);
+      try {
+        // 먼저 마이페이지 배송지 관리에서 기본 배송지 가져오기
+        const response = await fetch('/api/addresses');
+        if (response.ok) {
+          const data = await response.json();
+          const defaultAddress = data.addresses?.find((addr: any) => addr.is_default);
+          
+          if (defaultAddress) {
+            const addressCore: AddressCore = {
+              label: defaultAddress.name,
+              name: defaultAddress.name,
+              address1: defaultAddress.address1,
+              address2: defaultAddress.address2,
+              addressDetail: defaultAddress.address_detail,
+              entranceMethod: defaultAddress.entrance_method,
+              entranceNote: defaultAddress.entrance_note,
+              isDefault: defaultAddress.is_default
+            };
+            
+            if (!mounted) return;
+            setAddr(addressCore);
+            onChange?.(addressCore);
+            setLoading(false);
+            return;
+          }
+        }
+        
+        // 마이페이지에 배송지가 없으면 기존 방식 사용
+        const a = await loadDefaultAddress();
+        if (!mounted) return;
+        setAddr(a);
+        onChange?.(a ?? null);
+      } catch (error) {
+        console.error('Error loading addresses:', error);
+        // 에러 시 기존 방식 사용
+        const a = await loadDefaultAddress();
+        if (!mounted) return;
+        setAddr(a);
+        onChange?.(a ?? null);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
     })();
     return () => {
       mounted = false;
     };
   }, [onChange]);
 
-  const handleSelect = (base: { zipcode?: string; address1: string; si?: string; gu?: string; dong?: string }) => {
-    const next: AddressCore = { ...addr, ...base, isDefault: true };
+  const handleSelect = async (base: { zipcode?: string; address1: string; si?: string; gu?: string; dong?: string }) => {
+    const next: AddressCore = { 
+      ...addr, 
+      ...base, 
+      label: addr?.label || '우리집',
+      name: addr?.name || '',
+      isDefault: true 
+    };
     setAddr(next);
     onChange?.(next);
+    
+    try {
+      // 마이페이지 배송지 관리 API에 저장
+      const addressData = {
+        name: next.label || '우리집',
+        address1: next.address1,
+        address2: next.address2 || '',
+        address_detail: next.addressDetail || '',
+        entrance_method: next.entranceMethod || '',
+        entrance_note: next.entranceNote || '',
+        is_default: true
+      };
+      
+      const response = await fetch('/api/addresses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(addressData)
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to save address to database');
+      }
+    } catch (error) {
+      console.error('Error saving address:', error);
+    }
+    
+    // 기존 방식도 유지 (fallback)
     void persistDefaultAddress(next);
   };
 
@@ -94,10 +166,34 @@ export default function AddressSection({ value, onChange, className }: Props) {
         <input
           type="text"
           value={addr.addressDetail || ""}
-          onChange={(e) => {
+          onChange={async (e) => {
             const updated = { ...addr, addressDetail: e.target.value };
             setAddr(updated);
             onChange?.(updated);
+            
+            // 마이페이지 배송지 관리 API 업데이트
+            try {
+              const response = await fetch('/api/addresses');
+              if (response.ok) {
+                const data = await response.json();
+                const defaultAddress = data.addresses?.find((addr: any) => addr.is_default);
+                
+                if (defaultAddress) {
+                  await fetch(`/api/addresses/${defaultAddress.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      ...defaultAddress,
+                      address_detail: e.target.value
+                    })
+                  });
+                }
+              }
+            } catch (error) {
+              console.error('Error updating address detail:', error);
+            }
+            
+            // 기존 방식도 유지 (fallback)
             void persistDefaultAddress(updated);
           }}
           placeholder="동/호수 등"
@@ -123,10 +219,34 @@ export default function AddressSection({ value, onChange, className }: Props) {
                 name="entranceMethod"
                 value={option.value}
                 checked={addr.entranceMethod === option.value}
-                onChange={(e) => {
+                onChange={async (e) => {
                   const updated = { ...addr, entranceMethod: e.target.value as any };
                   setAddr(updated);
                   onChange?.(updated);
+                  
+                  // 마이페이지 배송지 관리 API 업데이트
+                  try {
+                    const response = await fetch('/api/addresses');
+                    if (response.ok) {
+                      const data = await response.json();
+                      const defaultAddress = data.addresses?.find((addr: any) => addr.is_default);
+                      
+                      if (defaultAddress) {
+                        await fetch(`/api/addresses/${defaultAddress.id}`, {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            ...defaultAddress,
+                            entrance_method: e.target.value
+                          })
+                        });
+                      }
+                    }
+                  } catch (error) {
+                    console.error('Error updating entrance method:', error);
+                  }
+                  
+                  // 기존 방식도 유지 (fallback)
                   void persistDefaultAddress(updated);
                 }}
                 className="w-4 h-4 text-[#13C2C2]"
@@ -142,10 +262,34 @@ export default function AddressSection({ value, onChange, className }: Props) {
             <input
               type="text"
               value={addr.entranceNote || ""}
-              onChange={(e) => {
+              onChange={async (e) => {
                 const updated = { ...addr, entranceNote: e.target.value };
                 setAddr(updated);
                 onChange?.(updated);
+                
+                // 마이페이지 배송지 관리 API 업데이트
+                try {
+                  const response = await fetch('/api/addresses');
+                  if (response.ok) {
+                    const data = await response.json();
+                    const defaultAddress = data.addresses?.find((addr: any) => addr.is_default);
+                    
+                    if (defaultAddress) {
+                      await fetch(`/api/addresses/${defaultAddress.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          ...defaultAddress,
+                          entrance_note: e.target.value
+                        })
+                      });
+                    }
+                  }
+                } catch (error) {
+                  console.error('Error updating entrance note:', error);
+                }
+                
+                // 기존 방식도 유지 (fallback)
                 void persistDefaultAddress(updated);
               }}
               placeholder="출입 안내"
