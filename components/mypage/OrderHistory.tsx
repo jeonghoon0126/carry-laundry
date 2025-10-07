@@ -190,18 +190,31 @@ export default function OrderHistory() {
           errorMessage = '해당 주문을 찾을 수 없거나 취소할 권한이 없습니다.'
         } else if (error.message.includes('Unauthorized')) {
           errorMessage = '로그인이 필요합니다.'
-        } else if (error.message.includes('이미 취소된 주문')) {
+        } else if (error.message.includes('이미 취소된 주문') || error.message.includes('Order already cancelled')) {
           errorMessage = '이미 취소된 주문입니다.'
-          // 자동으로 주문 목록 새로고침
-          loadOrders()
-        } else if (error.message.includes('Order already cancelled')) {
-          errorMessage = '이미 취소된 주문입니다.'
-          // 자동으로 주문 목록 새로고침
+          
+          // 취소 모달 닫기
+          handleCancelModalClose()
+          
+          // 로컬 상태 즉시 업데이트 (주문을 취소됨으로 표시)
+          setState(prev => ({
+            ...prev,
+            orders: prev.orders.map(order => 
+              order.id.toString() === cancelModal.orderId 
+                ? { ...order, status: 'cancelled' }
+                : order
+            )
+          }))
+          
+          // 백그라운드에서 주문 목록 새로고침 (실제 데이터 동기화)
           loadOrders()
         }
       }
       
-      alert(errorMessage)
+      // 에러 메시지가 있으면 표시
+      if (errorMessage) {
+        alert(errorMessage)
+      }
     } finally {
       setCancelModal(prev => ({ ...prev, isCancelling: false }))
     }
