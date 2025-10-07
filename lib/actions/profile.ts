@@ -1,7 +1,7 @@
 'use server'
 
 import { getSupabaseServer } from '@/lib/supabase-server'
-import { generateNickname } from '@/lib/utils/nickname'
+import { generateNicknameWithNumber } from '@/lib/utils/nickname'
 
 export async function upsertUserProfile(userData: {
   id: string
@@ -19,7 +19,7 @@ export async function upsertUserProfile(userData: {
       .eq('id', userData.id)
       .single()
     
-    const nickname = existingProfile?.nickname || generateNickname()
+    const nickname = existingProfile?.nickname || generateNicknameWithNumber()
     
     const { data, error } = await supabase
       .from('profiles')

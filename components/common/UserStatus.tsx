@@ -3,10 +3,12 @@
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { getDisplayName, getUserInitials } from '@/lib/utils/format'
+import { useNickname } from '@/lib/hooks/useNickname'
 
 export default function UserStatus() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { nickname, loading: nicknameLoading } = useNickname()
 
   // Show loading state to prevent hydration mismatch
   if (status === 'loading') {
@@ -51,7 +53,7 @@ export default function UserStatus() {
           {initials}
         </div>
         <span className="text-sm font-medium text-blue-900">
-          😀 {session.user?.nickname || session.user?.name || '고객'}님 로그인됨
+          😀 {nicknameLoading ? '로딩 중...' : nickname || session.user?.name || '고객'}님 로그인됨
         </span>
       </div>
 

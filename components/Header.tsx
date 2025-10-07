@@ -5,11 +5,13 @@ import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { getDisplayName, getUserInitials } from '@/lib/utils/format'
+import { useNickname } from '@/lib/hooks/useNickname'
 import LoginWithKakao from '@/components/auth/LoginWithKakao'
 
 export default function Header() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { nickname, loading: nicknameLoading } = useNickname()
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -45,7 +47,7 @@ export default function Header() {
                   {getUserInitials(session.user?.name)}
                 </div>
                 <span className="text-sm font-medium text-blue-900">
-                  😀 {session.user?.nickname || session.user?.name || '고객'}님 로그인됨
+                  😀 {nicknameLoading ? '로딩 중...' : nickname || session.user?.name || '고객'}님 로그인됨
                 </span>
               </div>
               <button

@@ -1,6 +1,7 @@
 import NextAuth from "next-auth"
 import KakaoProvider from "next-auth/providers/kakao"
 import { upsertUserProfile } from "@/lib/actions/profile"
+import { generateNicknameWithNumber } from "@/lib/utils/nickname"
 
 // Debug environment variables
 console.log("NextAuth Environment Variables:")
@@ -47,6 +48,10 @@ export const authOptions = {
             
             if (profileData?.nickname) {
               token.nickname = profileData.nickname
+            } else {
+              // 닉네임이 없으면 새로 생성
+              const newNickname = generateNicknameWithNumber()
+              token.nickname = newNickname
             }
           } catch (error) {
             console.error('Error fetching nickname:', error)

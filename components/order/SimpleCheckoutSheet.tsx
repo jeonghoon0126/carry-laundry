@@ -7,7 +7,7 @@ import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import { cn } from '@/lib/utils'
 import type { AddressCore } from '@/lib/addresses'
-import { generateNicknameWithNumber } from '@/lib/utils/nickname'
+import { useNickname } from '@/lib/hooks/useNickname'
 
 
 interface SimpleCheckoutSheetProps {
@@ -19,7 +19,7 @@ interface SimpleCheckoutSheetProps {
 
 export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress, hideAddressInput = true }: SimpleCheckoutSheetProps) {
   const router = useRouter()
-  const [name, setName] = useState<string>(generateNicknameWithNumber())
+  const { nickname, generateNewNickname, loading: nicknameLoading } = useNickname()
   const [phone, setPhone] = useState<string>('')
   const [address, setAddress] = useState<string>('')
   const [quantity, setQuantity] = useState<number>(1)
@@ -101,7 +101,7 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
   // CTA 활성화 조건: 이름/전화/주소/동의 체크박스 만족해야 활성화
   const isDisabled =
     isSubmitting ||
-    !name?.trim() ||
+    !(nickname && nickname.trim()) ||
     !/^01[0-9]-?\d{3,4}-?\d{4}$/.test(phone || "") ||
     !shippingAddress?.address1?.trim() ||
     !mainAgreement;
@@ -167,7 +167,7 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
       const orderId = `order_${orderResult.id}_${Date.now()}`
       const amount = Number(orderResult.amount || (11900 * quantity))
       const orderName = `세탁 주문 ${quantity}건`
-      const customerName = name
+      const customerName = nickname || '고객'
       const customerEmail = 'customer@example.com'
       
       const successUrl = `${window.location.origin}/api/payments/confirm`
@@ -262,11 +262,14 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
         <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
           <div>
             <div className="text-sm text-gray-600">닉네임</div>
-            <div className="font-medium text-gray-900">{name}</div>
+            <div className="font-medium text-gray-900">
+              {nicknameLoading ? '로딩 중...' : nickname || '닉네임 없음'}
+            </div>
           </div>
           <button
-            onClick={() => setName(generateNicknameWithNumber())}
-            className="text-sm text-[#13C2C2] hover:text-[#0FA8A8] underline"
+            onClick={generateNewNickname}
+            disabled={nicknameLoading}
+            className="text-sm text-[#13C2C2] hover:text-[#0FA8A8] underline disabled:opacity-50 disabled:cursor-not-allowed"
           >
             닉네임 변경
           </button>
