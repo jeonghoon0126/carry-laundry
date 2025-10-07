@@ -5,7 +5,7 @@ import { getUserOrderHistory, OrderHistoryItem } from '@/lib/actions/orders'
 import { formatOrderDate, maskPhone, shortAddress } from '@/lib/utils/format'
 import { useRouter } from 'next/navigation'
 import EmptyState from '@/components/common/EmptyState'
-import Skeleton from '@/components/common/Skeleton'
+import { SkeletonOrderCard } from '@/components/common/Skeleton'
 import Badge from '@/components/ui/Badge'
 
 interface OrderHistoryState {
@@ -73,7 +73,9 @@ export default function OrderHistory() {
       <div className="space-y-3">
         <h2 className="text-xl font-semibold text-[var(--text)] mb-4">최근 주문</h2>
         {[...Array(3)].map((_, i) => (
-          <Skeleton key={i} h={64} className="w-full mb-3" />
+          <div key={i} className="skeleton-slide-up" style={{ animationDelay: `${i * 0.1}s` }}>
+            <SkeletonOrderCard />
+          </div>
         ))}
       </div>
     )

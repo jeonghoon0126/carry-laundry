@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import AddressSearch from "./AddressSearch";
 import { AddressCore, loadDefaultAddress, persistDefaultAddress } from "@/lib/addresses";
 import { cn } from "@/lib/utils";
+import { SkeletonAddressCard } from "@/components/common/Skeleton";
 
 type Props = {
   value?: AddressCore | null;
@@ -111,12 +112,7 @@ export default function AddressSection({ value, onChange, className }: Props) {
   };
 
   if (loading) {
-    return (
-      <section className={cn("rounded-2xl border border-gray-200 bg-white shadow-sm p-5", className)}>
-        <div className="h-5 w-28 bg-gray-100 rounded mb-3" />
-        <div className="h-12 w-full bg-gray-100 rounded" />
-      </section>
-    );
+    return <SkeletonAddressCard className={className} />;
   }
 
   // 빈 상태

@@ -15,9 +15,9 @@ export default function SessionCTA({ onPrimaryClick, onSecondaryClick }: Session
   // Loading state to prevent hydration mismatch
   if (status === 'loading') {
     return (
-      <div className="flex flex-col sm:flex-row gap-3 w-full">
-        <div className="flex-1 h-12 bg-gray-200 rounded-xl animate-pulse"></div>
-        <div className="w-32 h-12 bg-gray-200 rounded-xl animate-pulse"></div>
+      <div className="flex flex-col sm:flex-row gap-3 w-full skeleton-fade-in">
+        <div className="flex-1 h-12 bg-gray-200 rounded-xl skeleton-shimmer"></div>
+        <div className="w-32 h-12 bg-gray-200 rounded-xl skeleton-shimmer"></div>
       </div>
     )
   }

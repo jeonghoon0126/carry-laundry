@@ -13,9 +13,9 @@ export default function UserStatus() {
   // Show loading state to prevent hydration mismatch
   if (status === 'loading') {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-full animate-pulse">
-        <div className="w-6 h-6 bg-gray-300 rounded-full"></div>
-        <div className="w-20 h-4 bg-gray-300 rounded"></div>
+      <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-full skeleton-fade-in">
+        <div className="w-6 h-6 bg-gray-200 rounded-full skeleton-shimmer"></div>
+        <div className="w-20 h-4 bg-gray-200 rounded skeleton-shimmer"></div>
       </div>
     )
   }
@@ -53,7 +53,12 @@ export default function UserStatus() {
           {initials}
         </div>
         <span className="text-sm font-medium text-blue-900">
-          😀 {nicknameLoading ? '로딩 중...' : nickname || session.user?.name || '고객'}님 로그인됨
+          😀 {nicknameLoading ? (
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 bg-gray-300 rounded skeleton-shimmer"></div>
+              <span>닉네임 로딩 중...</span>
+            </div>
+          ) : nickname || session.user?.name || '고객'}님 로그인됨
         </span>
       </div>
 

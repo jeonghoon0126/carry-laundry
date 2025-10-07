@@ -8,6 +8,7 @@ import Badge from '@/components/ui/Badge'
 import { cn } from '@/lib/utils'
 import type { AddressCore } from '@/lib/addresses'
 import { useNickname } from '@/lib/hooks/useNickname'
+import { SkeletonCheckoutSheet } from '@/components/common/Skeleton'
 
 
 interface SimpleCheckoutSheetProps {
@@ -88,14 +89,7 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
   }, [])
 
   if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <div className="h-8 bg-gray-200 rounded animate-pulse"></div>
-        <div className="h-32 bg-gray-200 rounded-2xl animate-pulse"></div>
-        <div className="h-24 bg-gray-200 rounded-2xl animate-pulse"></div>
-        <div className="h-32 bg-gray-200 rounded-2xl animate-pulse"></div>
-      </div>
-    )
+    return <SkeletonCheckoutSheet />
   }
 
   // CTA 활성화 조건: 이름/전화/주소/동의 체크박스 만족해야 활성화
@@ -263,7 +257,12 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
           <div>
             <div className="text-sm text-gray-600">닉네임</div>
             <div className="font-medium text-gray-900">
-              {nicknameLoading ? '로딩 중...' : nickname || '닉네임 없음'}
+              {nicknameLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-gray-300 rounded skeleton-shimmer"></div>
+                  <span className="text-gray-400">닉네임 생성 중...</span>
+                </div>
+              ) : nickname || '닉네임 없음'}
             </div>
           </div>
           <button

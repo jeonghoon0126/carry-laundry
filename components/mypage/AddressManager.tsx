@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Plus, MapPin, Edit, Trash2, Star } from 'lucide-react'
 import AddressForm from './AddressForm'
 import type { AddressCore } from '@/lib/addresses'
+import { SkeletonAddressCard } from '@/components/common/Skeleton'
 
 interface Address {
   id: string
@@ -113,9 +114,12 @@ export default function AddressManager({ onAddressSelect }: AddressManagerProps)
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="h-8 bg-gray-200 rounded animate-pulse"></div>
-        <div className="h-24 bg-gray-200 rounded-2xl animate-pulse"></div>
-        <div className="h-24 bg-gray-200 rounded-2xl animate-pulse"></div>
+        <div className="h-8 bg-gray-200 rounded skeleton-shimmer"></div>
+        {[...Array(2)].map((_, i) => (
+          <div key={i} className="skeleton-slide-up" style={{ animationDelay: `${i * 0.1}s` }}>
+            <SkeletonAddressCard />
+          </div>
+        ))}
       </div>
     )
   }
