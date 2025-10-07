@@ -13,12 +13,12 @@ npm run dev
 ✅ **Should show CTA:**
 - Navigate to `http://localhost:3000/` (home)
 - Navigate to `http://localhost:3000/home`
-- Navigate to `http://localhost:3000/mypage`
 - **Expected**: Fixed CTA visible at bottom with "🛒 11,900원에 주문하기"
 
 ❌ **Should hide CTA:**
 - Navigate to `http://localhost:3000/order`
 - Navigate to `http://localhost:3000/admin`
+- Navigate to `http://localhost:3000/mypage`
 - **Expected**: No CTA visible
 
 ### 2. **Design & Layout Test**
@@ -93,7 +93,7 @@ npm run dev
 |-------|-------------|-------|
 | `/` | ✅ | Home page |
 | `/home` | ✅ | Landing page |
-| `/mypage` | ✅ | User dashboard |
+| `/mypage` | ❌ | Hidden on user dashboard |
 | `/order` | ❌ | Hidden on order page |
 | `/order/confirmation` | ❌ | Hidden on order children |
 | `/admin` | ❌ | Hidden on admin page |
