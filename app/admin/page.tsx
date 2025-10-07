@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Skeleton, { SkeletonCard } from '@/components/common/Skeleton'
-import { RefreshCw, Search, TrendingUp, Users, Package, CreditCard, AlertCircle } from 'lucide-react'
+import { RefreshCw, Search, TrendingUp, Users, Package, CreditCard, AlertCircle, X, AlertTriangle } from 'lucide-react'
 
 type Order = { 
   id: number
@@ -30,6 +30,13 @@ type AdminStats = {
 
 type FilterType = 'all' | 'paid' | 'unpaid' | 'today'
 
+interface CancelModalState {
+  isOpen: boolean
+  orderId: string | null
+  orderNumber: string | null
+  isCancelling: boolean
+}
+
 export default function AdminPage() {
   const [orders, setOrders] = useState<Order[] | null>(null)
   const [stats, setStats] = useState<AdminStats | null>(null)
@@ -38,6 +45,12 @@ export default function AdminPage() {
   const [filter, setFilter] = useState<FilterType>('all')
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [cancelModal, setCancelModal] = useState<CancelModalState>({
+    isOpen: false,
+    orderId: null,
+    orderNumber: null,
+    isCancelling: false
+  })
 
   async function load(isRefresh = false) {
     try {
@@ -84,6 +97,74 @@ export default function AdminPage() {
   }
 
   useEffect(() => { load() }, [])
+
+  // 주문 취소 모달 열기
+  const handleCancelClick = (orderId: string, orderNumber: string) => {
+    setCancelModal({
+      isOpen: true,
+      orderId,
+      orderNumber,
+      isCancelling: false
+    })
+  }
+
+  // 주문 취소 모달 닫기
+  const handleCancelModalClose = () => {
+    setCancelModal({
+      isOpen: false,
+      orderId: null,
+      orderNumber: null,
+      isCancelling: false
+    })
+  }
+
+  // 주문 취소 실행 (어드민용)
+  const handleCancelConfirm = async () => {
+    if (!cancelModal.orderId) return
+
+    try {
+      setCancelModal(prev => ({ ...prev, isCancelling: true }))
+      
+      const response = await fetch(`/api/orders/${cancelModal.orderId}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: '관리자에 의한 취소' })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || '주문 취소에 실패했습니다')
+      }
+
+      const result = await response.json()
+      console.log('Admin cancel success:', result)
+
+      // 주문 목록 새로고침
+      await load(true)
+      
+      // 취소 모달 닫기
+      handleCancelModalClose()
+      
+      alert('주문이 성공적으로 취소되었습니다.')
+    } catch (error) {
+      console.error('Error cancelling order:', error)
+      
+      let errorMessage = '주문 취소 중 오류가 발생했습니다'
+      if (error instanceof Error) {
+        errorMessage = error.message
+      }
+      
+      alert(errorMessage)
+    } finally {
+      setCancelModal(prev => ({ ...prev, isCancelling: false }))
+    }
+  }
+
+  // 취소 가능한 주문인지 확인 (어드민은 모든 결제완료 주문 취소 가능)
+  const canCancelOrder = (order: Order) => {
+    // 결제가 완료된 주문만 취소 가능
+    return order.paid === true
+  }
 
   const filtered = (orders ?? []).filter(o => {
     const t = q.trim()
@@ -367,6 +448,19 @@ export default function AdminPage() {
                         </p>
                       </div>
                     </div>
+                    
+                    {/* Mobile Cancel Button */}
+                    {canCancelOrder(o) && (
+                      <div className="pt-3 border-t border-gray-100">
+                        <button
+                          onClick={() => handleCancelClick(o.id.toString(), `#${o.id}`)}
+                          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                          주문 취소
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -397,6 +491,9 @@ export default function AdminPage() {
                     </th>
                     <th className="px-4 lg:px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       결제금액
+                    </th>
+                    <th className="px-4 lg:px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      액션
                     </th>
                   </tr>
                 </thead>
@@ -472,10 +569,72 @@ export default function AdminPage() {
                           <span className="text-gray-400">-</span>
                         )}
                       </td>
+                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-center">
+                        {canCancelOrder(o) && (
+                          <button
+                            onClick={() => handleCancelClick(o.id.toString(), `#${o.id}`)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                          >
+                            <X className="w-3 h-3" />
+                            <span className="hidden lg:inline">취소</span>
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {/* Cancel Confirmation Modal */}
+        {cancelModal.isOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-200">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <AlertTriangle className="w-8 h-8 text-red-600" />
+                </div>
+                
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  주문을 취소하시겠어요?
+                </h3>
+                
+                <div className="text-sm text-gray-600 mb-6 space-y-1">
+                  <p>주문번호: <span className="font-mono">{cancelModal.orderNumber}</span></p>
+                  <p className="text-red-600 font-medium">
+                    관리자 권한으로 주문을 취소합니다.
+                  </p>
+                  <p className="text-blue-600 text-xs">
+                    결제된 금액은 자동으로 환불됩니다.
+                  </p>
+                </div>
+                
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleCancelModalClose}
+                    disabled={cancelModal.isCancelling}
+                    className="flex-1 px-4 py-3 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                  >
+                    아니요
+                  </button>
+                  <button
+                    onClick={handleCancelConfirm}
+                    disabled={cancelModal.isCancelling}
+                    className="flex-1 px-4 py-3 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {cancelModal.isCancelling ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        취소 중...
+                      </>
+                    ) : (
+                      '주문 취소'
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
