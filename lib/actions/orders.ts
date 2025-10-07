@@ -14,6 +14,9 @@ export interface OrderHistoryItem {
   payment_amount: number | null
   payment_method: string | null
   payment_receipt_url: string | null
+  status?: string
+  cancelled_at?: string
+  cancel_reason?: string
 }
 
 export interface OrderHistoryResponse {
@@ -42,7 +45,7 @@ export async function getUserOrderHistory(
     // Build query with cursor-based pagination
     let query = supabase
       .from('orders')
-      .select('id, created_at, name, phone, address, paid, payment_amount, payment_method, payment_receipt_url')
+      .select('id, created_at, name, phone, address, paid, payment_amount, payment_method, payment_receipt_url, status, cancelled_at, cancel_reason')
       .eq('user_id', session.user.id)
       .order('id', { ascending: false })
       .limit(limit + 1) // Fetch one extra to check if there are more

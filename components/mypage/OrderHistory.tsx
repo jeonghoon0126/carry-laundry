@@ -201,7 +201,7 @@ export default function OrderHistory() {
             ...prev,
             orders: prev.orders.map(order => 
               order.id.toString() === cancelModal.orderId 
-                ? { ...order, status: 'cancelled' }
+                ? { ...order, status: 'cancelled' as string }
                 : order
             )
           }))
@@ -222,8 +222,10 @@ export default function OrderHistory() {
 
   // 주문 상태에 따른 배지 렌더링
   const renderOrderStatus = (order: OrderHistoryItem) => {
+    console.log(`Order ${order.id} status:`, order.status, 'paid:', order.paid)
+    
     // 주문이 취소된 경우
-    if ((order as any).status === 'cancelled') {
+    if (order.status === 'cancelled') {
       return <Badge variant="danger">주문취소</Badge>
     }
     
@@ -239,7 +241,7 @@ export default function OrderHistory() {
   // 취소 가능한 주문인지 확인
   const canCancelOrder = (order: OrderHistoryItem) => {
     // 취소된 주문은 취소 불가
-    if ((order as any).status === 'cancelled') {
+    if (order.status === 'cancelled') {
       return false
     }
     
