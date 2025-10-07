@@ -9,8 +9,15 @@ export async function POST(
 ) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    console.log('Cancel API - Session:', session)
+    
+    if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const userId = (session.user as any).id
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID not found' }, { status: 401 })
     }
 
     const orderId = params.id
@@ -24,7 +31,7 @@ export async function POST(
       .from('orders')
       .select('*')
       .eq('id', orderId)
-      .eq('user_id', session.user.id)
+      .eq('user_id', userId)
       .single()
 
     if (fetchError || !order) {
@@ -40,15 +47,14 @@ export async function POST(
     // 결제가 완료된 주문인 경우 토스페이먼츠 취소 처리
     if (order.paid && order.payment_id) {
       try {
-        const cancelResponse = await fetch('https://api.tosspayments.com/v1/payments/cancel', {
+        const cancelResponse = await fetch(`https://api.tosspayments.com/v1/payments/${order.payment_id}/cancel`, {
           method: 'POST',
           headers: {
             'Authorization': `Basic ${Buffer.from(`${process.env.TOSS_SECRET_KEY}:`).toString('base64')}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            cancelReason: reason || '고객 요청에 의한 취소',
-            cancelAmount: order.payment_amount || order.amount
+            cancelReason: reason || '고객 요청에 의한 취소'
           })
         })
 
@@ -82,7 +88,7 @@ export async function POST(
         updated_at: new Date().toISOString()
       })
       .eq('id', orderId)
-      .eq('user_id', session.user.id)
+      .eq('user_id', userId)
       .select()
       .single()
 

@@ -7,8 +7,17 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    console.log('Nickname API - Session:', session)
+    
+    if (!session?.user) {
+      console.log('No session found')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const userId = (session.user as any).id
+    if (!userId) {
+      console.log('No user ID in session:', session.user)
+      return NextResponse.json({ error: 'User ID not found' }, { status: 401 })
     }
 
     const supabase = getSupabaseServer()
@@ -17,7 +26,7 @@ export async function GET() {
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('nickname')
-      .eq('id', session.user.id)
+      .eq('id', userId)
       .single()
 
     if (error) {
@@ -78,12 +87,17 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const userId = (session.user as any).id
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID not found' }, { status: 401 })
+    }
+
     const body = await request.json()
-    const { action } = body
+    const { action, newNickname } = body
 
     if (action === 'generate') {
       // 새 닉네임 생성
@@ -97,7 +111,7 @@ export async function PUT(request: NextRequest) {
           nickname: newNickname,
           updated_at: new Date().toISOString()
         })
-        .eq('id', session.user.id)
+        .eq('id', userId)
         .select()
 
       if (error) {
@@ -109,9 +123,31 @@ export async function PUT(request: NextRequest) {
         success: true,
         nickname: newNickname 
       })
+    } else if (newNickname) {
+      // 사용자 지정 닉네임 업데이트
+      const supabase = getSupabaseServer()
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ 
+          nickname: newNickname,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId)
+        .select()
+
+      if (error) {
+        console.error('Error updating nickname:', error)
+        return NextResponse.json({ error: 'Failed to update nickname' }, { status: 500 })
+      }
+
+      return NextResponse.json({ 
+        success: true,
+        nickname: newNickname 
+      })
     }
 
-    return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid action or nickname' }, { status: 400 })
   } catch (error) {
     console.error('Error in nickname PUT:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
