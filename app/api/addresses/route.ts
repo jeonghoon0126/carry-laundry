@@ -31,7 +31,17 @@ export async function GET() {
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching addresses:', error)
+      console.error('Error fetching addresses:', {
+        error: error.message,
+        code: error.code,
+        details: error.details
+      })
+      
+      // If table doesn't exist, return empty array instead of error
+      if (error.code === 'PGRST116' || error.message.includes('relation "addresses" does not exist')) {
+        return NextResponse.json({ addresses: [] })
+      }
+      
       return NextResponse.json({ error: 'Failed to fetch addresses' }, { status: 500 })
     }
 
@@ -92,8 +102,28 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error('Error creating address:', error)
-      return NextResponse.json({ error: 'Failed to create address' }, { status: 500 })
+      console.error('Error creating address:', {
+        error: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        body
+      })
+      
+      // If table doesn't exist, provide helpful error message
+      if (error.code === 'PGRST116' || error.message.includes('relation "addresses" does not exist')) {
+        return NextResponse.json({ 
+          error: 'Address table not found. Please create the addresses table in Supabase.',
+          code: 'TABLE_NOT_EXISTS',
+          details: 'The addresses table needs to be created in the database.'
+        }, { status: 500 })
+      }
+      
+      return NextResponse.json({ 
+        error: 'Failed to create address',
+        details: error.message,
+        code: error.code
+      }, { status: 500 })
     }
 
     return NextResponse.json({ address })
