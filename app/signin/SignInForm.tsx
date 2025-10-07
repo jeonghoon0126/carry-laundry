@@ -2,6 +2,7 @@
 
 import { signIn } from 'next-auth/react'
 import { useState } from 'react'
+import { SkeletonButton } from '@/components/common/Skeleton'
 
 interface SignInFormProps {
   from?: string
@@ -40,14 +41,11 @@ export default function SignInForm({ from }: SignInFormProps) {
       <button
         onClick={handleKakaoSignIn}
         disabled={isLoading}
-        className="w-full h-14 bg-yellow-400 hover:bg-yellow-500 disabled:bg-yellow-300 text-gray-900 font-bold rounded-xl transition-colors flex items-center justify-center gap-3 shadow-lg"
+        className="w-full h-14 bg-yellow-400 hover:bg-yellow-500 disabled:bg-yellow-300 text-gray-900 font-bold rounded-2xl transition-all duration-200 flex items-center justify-center gap-3 shadow-sm hover:shadow-md disabled:opacity-50"
         aria-label="카카오로 로그인"
       >
         {isLoading ? (
-          <>
-            <div className="w-5 h-5 border-2 border-gray-600 border-t-transparent rounded-full animate-spin"></div>
-            로그인 중...
-          </>
+          <SkeletonButton className="w-full h-6" />
         ) : (
           <>
             {/* Kakao logo */}
