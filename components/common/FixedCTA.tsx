@@ -37,7 +37,7 @@ export default function FixedCTA() {
         <button
           onClick={handleOrderClick}
           disabled={status === 'loading'}
-          className="w-full h-12 rounded-xl font-bold bg-[#13C2C2] text-white hover:bg-[#0FA8A8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full h-12 rounded-xl font-bold text-[#13C2C2] hover:text-[#0FA8A8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label={status === 'loading' ? '로딩 중...' : '11,900원에 주문하기'}
         >
           {status === 'loading' ? '로딩 중...' : '🛒 11,900원에 주문하기'}
