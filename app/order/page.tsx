@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import AddressSection from "@/components/order/AddressSection";
 import SimpleCheckoutSheet from "@/components/order/SimpleCheckoutSheet";
 import type { AddressCore } from "@/lib/addresses";
@@ -10,10 +11,12 @@ export const dynamic = "force-dynamic";
 
 function OrderPageContent() {
   // This page must NOT reference isSubmitting. That state lives inside SimpleCheckoutSheet.
+  const router = useRouter();
   const [shippingAddress, setShippingAddress] = useState<AddressCore | null>(null);
   const searchParams = useSearchParams();
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   useEffect(() => {
     // 결제 실패 에러 체크
@@ -61,10 +64,31 @@ function OrderPageContent() {
     }
   }, [searchParams]);
 
+  const handleBackClick = () => {
+    setShowCancelModal(true);
+  };
+
+  const handleCancelConfirm = () => {
+    router.back();
+  };
+
+  const handleCancelCancel = () => {
+    setShowCancelModal(false);
+  };
+
   return (
     <main className="min-h-[100dvh] w-full bg-gray-50 px-4 py-6">
       <div className="mx-auto w-full max-w-[720px]">
-        <h1 className="text-2xl font-semibold mb-4">세탁 주문</h1>
+        {/* Header with Back Button */}
+        <div className="flex items-center gap-3 mb-4">
+          <button
+            onClick={handleBackClick}
+            className="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          </button>
+          <h1 className="text-2xl font-semibold">세탁 주문</h1>
+        </div>
 
         {/* 결제 실패 에러 메시지 */}
         {showError && (
@@ -102,6 +126,46 @@ function OrderPageContent() {
         {/* 결제 섹션 (isSubmitting은 내부에서 관리) */}
         <SimpleCheckoutSheet shippingAddress={shippingAddress || undefined} />
       </div>
+
+      {/* Cancel Confirmation Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-200">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">⚠️</span>
+              </div>
+              
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                앗, 주문을 취소하시겠어요?
+              </h3>
+              
+              <div className="text-sm text-gray-600 mb-6 space-y-1">
+                <p>신청한 내용이 모두 사라집니다.</p>
+                <p>정말 취소하고 나가시겠어요?</p>
+                <p className="text-xs text-gray-500 mt-2">
+                  (사실 사라지는 건 아니야, 뒤로 갔다가 돌아와도 정보들은 기억되니까)
+                </p>
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={handleCancelCancel}
+                  className="flex-1 px-4 py-3 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  아니요
+                </button>
+                <button
+                  onClick={handleCancelConfirm}
+                  className="flex-1 px-4 py-3 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors"
+                >
+                  주문 취소
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
