@@ -140,7 +140,8 @@ export async function POST(
     
     const updateData: any = {
       cancelled_at: new Date().toISOString(),
-      cancel_reason: reason || '고객 요청에 의한 취소'
+      cancel_reason: reason || '고객 요청에 의한 취소',
+      updated_at: new Date().toISOString()
     }
     
     // status 필드가 존재하는 경우에만 추가

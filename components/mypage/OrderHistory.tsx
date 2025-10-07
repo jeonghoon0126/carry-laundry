@@ -25,6 +25,11 @@ interface CancelModalState {
   isCancelling: boolean
 }
 
+interface SuccessModalState {
+  isOpen: boolean
+  cancelledOrder: OrderHistoryItem | null
+}
+
 export default function OrderHistory() {
   const [state, setState] = useState<OrderHistoryState>({
     orders: [],
@@ -38,6 +43,10 @@ export default function OrderHistory() {
     orderId: null,
     orderNumber: null,
     isCancelling: false
+  })
+  const [successModal, setSuccessModal] = useState<SuccessModalState>({
+    isOpen: false,
+    cancelledOrder: null
   })
   const router = useRouter()
 
@@ -102,6 +111,27 @@ export default function OrderHistory() {
     })
   }
 
+  // 성공 모달 열기
+  const handleSuccessModalOpen = (cancelledOrder: OrderHistoryItem) => {
+    setSuccessModal({
+      isOpen: true,
+      cancelledOrder
+    })
+  }
+
+  // 성공 모달 닫기
+  const handleSuccessModalClose = () => {
+    setSuccessModal({
+      isOpen: false,
+      cancelledOrder: null
+    })
+  }
+
+  // 홈으로 돌아가기
+  const handleGoHome = () => {
+    router.push('/')
+  }
+
   // 주문 취소 실행
   const handleCancelConfirm = async () => {
     if (!cancelModal.orderId) return
@@ -133,13 +163,21 @@ export default function OrderHistory() {
       const result = await response.json()
       console.log('Cancel success:', result)
 
+      // 취소된 주문 찾기
+      const cancelledOrder = state.orders.find(order => order.id.toString() === cancelModal.orderId)
+      
       // 주문 목록 새로고침
       await loadOrders()
       
-      // 모달 닫기
+      // 취소 모달 닫기
       handleCancelModalClose()
       
-      alert(result.message || '주문이 성공적으로 취소되었습니다')
+      // 성공 모달 열기
+      if (cancelledOrder) {
+        handleSuccessModalOpen(cancelledOrder)
+      } else {
+        alert(result.message || '주문이 성공적으로 취소되었습니다')
+      }
     } catch (error) {
       console.error('Error cancelling order:', error)
       
@@ -419,6 +457,86 @@ export default function OrderHistory() {
                   )}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {successModal.isOpen && successModal.cancelledOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md animate-in zoom-in-95 duration-200">
+            <div className="text-center">
+              {/* Success Icon */}
+              <div className="w-20 h-20 mx-auto mb-4 relative">
+                <img 
+                  src="/assets/icon/ok2.png" 
+                  alt="Success" 
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              
+              {/* Title */}
+              <h3 className="text-xl font-bold text-gray-900 mb-6">
+                주문 취소 완료
+              </h3>
+              
+              {/* Order Details */}
+              <div className="bg-gray-50 rounded-xl p-4 mb-6 text-left">
+                <h4 className="font-semibold text-gray-900 mb-3 text-center">취소된 주문 내역</h4>
+                
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">주문번호</span>
+                    <span className="font-mono font-medium">#{successModal.cancelledOrder.id}</span>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">주문일시</span>
+                    <span>{formatOrderDate(successModal.cancelledOrder.created_at)}</span>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">주문자</span>
+                    <span>{successModal.cancelledOrder.name}</span>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">연락처</span>
+                    <span>{maskPhone(successModal.cancelledOrder.phone)}</span>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">주소</span>
+                    <span className="text-right max-w-[200px]">{shortAddress(successModal.cancelledOrder.address, 20)}</span>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">결제금액</span>
+                    <span className="font-semibold">
+                      {successModal.cancelledOrder.payment_amount 
+                        ? `${successModal.cancelledOrder.payment_amount.toLocaleString()}원`
+                        : '미결제'
+                      }
+                    </span>
+                  </div>
+                  
+                  <div className="pt-2 border-t border-gray-200">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">상태</span>
+                      <Badge variant="danger">취소됨</Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* CTA Button */}
+              <button
+                onClick={handleGoHome}
+                className="w-full px-6 py-3 bg-[#13C2C2] text-white rounded-xl font-semibold hover:bg-[#0FAFAF] transition-colors"
+              >
+                홈으로 돌아가기
+              </button>
             </div>
           </div>
         </div>
