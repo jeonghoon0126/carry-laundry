@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { SkeletonCard, SkeletonText, Skeleton } from '@/components/common/Skeleton'
+import Skeleton, { SkeletonCard } from '@/components/common/Skeleton'
 import { RefreshCw, Search, TrendingUp, Users, Package, CreditCard, AlertCircle } from 'lucide-react'
 
 type Order = { 
