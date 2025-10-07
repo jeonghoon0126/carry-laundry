@@ -32,12 +32,12 @@ export default function FixedCTA() {
   }
 
   return (
-    <div className="fixed left-0 right-0 bottom-0 z-50 bg-black/50 backdrop-blur-md">
-      <div className="max-w-md mx-auto px-4 py-3 pb-[max(env(safe-area-inset-bottom),12px)]">
+    <div className="fixed left-0 right-0 bottom-0 z-50 p-4 pb-[max(env(safe-area-inset-bottom),16px)]">
+      <div className="max-w-md mx-auto">
         <button
           onClick={handleOrderClick}
           disabled={status === 'loading'}
-          className="w-full h-12 rounded-xl font-bold bg-white/90 text-[#13C2C2] hover:bg-white hover:text-[#0FA8A8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full h-12 rounded-xl font-bold bg-[#13C2C2] text-white hover:bg-[#0FA8A8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
           aria-label={status === 'loading' ? '로딩 중...' : '11,900원에 주문하기'}
         >
           {status === 'loading' ? '로딩 중...' : '🛒 11,900원에 주문하기'}
