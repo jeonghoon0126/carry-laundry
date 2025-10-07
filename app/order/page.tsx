@@ -132,7 +132,7 @@ function OrderPageContent() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-200">
             <div className="text-center">
-              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-[#13C2C2]/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">⚠️</span>
               </div>
               
@@ -143,9 +143,6 @@ function OrderPageContent() {
               <div className="text-sm text-gray-600 mb-6 space-y-1">
                 <p>신청한 내용이 모두 사라집니다.</p>
                 <p>정말 취소하고 나가시겠어요?</p>
-                <p className="text-xs text-gray-500 mt-2">
-                  (사실 사라지는 건 아니야, 뒤로 갔다가 돌아와도 정보들은 기억되니까)
-                </p>
               </div>
               
               <div className="flex gap-3">
@@ -157,7 +154,7 @@ function OrderPageContent() {
                 </button>
                 <button
                   onClick={handleCancelConfirm}
-                  className="flex-1 px-4 py-3 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors"
+                  className="flex-1 px-4 py-3 text-sm font-medium text-white bg-[#13C2C2] rounded-lg hover:bg-[#0FA8A8] transition-colors"
                 >
                   주문 취소
                 </button>
