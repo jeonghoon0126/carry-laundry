@@ -28,11 +28,25 @@ export default function OrderProgressBottomSheet({
 
   // 바텀시트 열림/닫힘 상태를 전역 상태에 반영
   useEffect(() => {
+    console.log('OrderProgressBottomSheet: Setting isOrderProgressVisible to', isOpen)
+    // 즉시 상태 업데이트
     setIsOrderProgressVisible(isOpen)
     
     // 컴포넌트 언마운트 시 상태 초기화
     return () => {
+      console.log('OrderProgressBottomSheet: Setting isOrderProgressVisible to false (cleanup)')
       setIsOrderProgressVisible(false)
+    }
+  }, [isOpen, setIsOrderProgressVisible])
+
+  // 추가적인 상태 동기화 (바텀시트가 실제로 렌더링될 때)
+  useEffect(() => {
+    if (isOpen) {
+      // 바텀시트가 열릴 때 강제로 상태 업데이트
+      const timer = setTimeout(() => {
+        setIsOrderProgressVisible(true)
+      }, 0)
+      return () => clearTimeout(timer)
     }
   }, [isOpen, setIsOrderProgressVisible])
 

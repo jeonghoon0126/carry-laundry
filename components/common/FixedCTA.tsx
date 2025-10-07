@@ -10,9 +10,20 @@ export default function FixedCTA() {
   const { data: session, status } = useSession()
   const { isOrderProgressVisible } = useOrderProgress()
 
+  // Debug logging
+  console.log('FixedCTA Debug:', {
+    pathname,
+    isOrderProgressVisible,
+    shouldHide: pathname.startsWith('/order') || pathname.startsWith('/admin') || pathname.startsWith('/auth/guest-gate') || pathname.startsWith('/mypage') || isOrderProgressVisible
+  })
+
   // Hidden on /order, /admin, /auth/guest-gate, /mypage and their children
   // Also hidden when order progress is visible
-  const shouldHide = pathname.startsWith('/order') || pathname.startsWith('/admin') || pathname.startsWith('/auth/guest-gate') || pathname.startsWith('/mypage') || isOrderProgressVisible
+  const shouldHide = pathname.startsWith('/order') || 
+                     pathname.startsWith('/admin') || 
+                     pathname.startsWith('/auth/guest-gate') || 
+                     pathname.startsWith('/mypage') || 
+                     isOrderProgressVisible
   
   if (shouldHide) {
     return null

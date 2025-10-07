@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
+import { useOrderProgress } from '@/lib/contexts/OrderProgressContext'
 import Header from '@/components/Header'
 import Hero from '@/components/landing/Hero'
 import FloatingViewers from '@/components/common/FloatingViewers'
@@ -12,8 +13,21 @@ import { Package } from 'lucide-react'
 
 export default function HomePage() {
   const { data: session } = useSession()
+  const { setIsOrderProgressVisible } = useOrderProgress()
   const [showOrderProgress, setShowOrderProgress] = useState(false)
   const [hasActiveOrder, setHasActiveOrder] = useState(false)
+  
+  // 디버깅을 위한 로그
+  console.log('HomePage Debug:', {
+    showOrderProgress,
+    hasActiveOrder,
+    sessionUser: !!session?.user
+  })
+
+  // 바텀시트 상태가 변경될 때마다 전역 상태 동기화
+  useEffect(() => {
+    setIsOrderProgressVisible(showOrderProgress)
+  }, [showOrderProgress, setIsOrderProgressVisible])
 
   // 로그인된 사용자의 활성 주문 확인
   useEffect(() => {
