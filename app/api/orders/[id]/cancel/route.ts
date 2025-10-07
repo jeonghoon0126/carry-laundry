@@ -43,14 +43,27 @@ export async function POST(
     const supabase = getSupabaseServer()
     console.log('Supabase client obtained')
     
-    // 주문 정보 조회
+    // 어드민 권한 확인 (이메일 기반)
+    const isAdmin = session.user?.email === 'admin@carry-laundry.com' || 
+                   session.user?.email?.endsWith('@carry-laundry.com')
+    
+    console.log('Admin check:', { 
+      email: session.user?.email, 
+      isAdmin 
+    })
+
+    // 주문 정보 조회 (어드민은 모든 주문, 일반 사용자는 자신의 주문만)
     console.log('Fetching order from database...')
-    const { data: order, error: fetchError } = await supabase
+    let orderQuery = supabase
       .from('orders')
       .select('*')
       .eq('id', orderId)
-      .eq('user_id', userId)
-      .single()
+    
+    if (!isAdmin) {
+      orderQuery = orderQuery.eq('user_id', userId)
+    }
+    
+    const { data: order, error: fetchError } = await orderQuery.single()
 
     console.log('Order fetch result:', { order, fetchError })
 
@@ -68,19 +81,22 @@ export async function POST(
     }
 
     if (!order) {
-      console.error('No order found for ID:', orderId, 'User ID:', userId)
+      console.error('No order found for ID:', orderId, 'User ID:', userId, 'Is Admin:', isAdmin)
       
-      // 사용자의 모든 주문 조회해서 디버그 정보 제공
+      // 디버그 정보 제공
       const { data: userOrders } = await supabase
         .from('orders')
         .select('id')
         .eq('user_id', userId)
       
       return NextResponse.json({ 
-        error: 'Order not found or you do not have permission to cancel this order',
+        error: isAdmin 
+          ? `Order ${orderId} not found` 
+          : 'Order not found or you do not have permission to cancel this order',
         debug: {
           requestedOrderId: orderId,
           userId,
+          isAdmin,
           userOrderIds: userOrders?.map(o => o.id) || []
         }
       }, { status: 404 })
@@ -161,11 +177,17 @@ export async function POST(
     
     console.log('Update data:', updateData)
     
-    const { data: updatedOrder, error: updateError } = await supabase
+    // 업데이트 쿼리 (어드민은 모든 주문, 일반 사용자는 자신의 주문만)
+    let updateQuery = supabase
       .from('orders')
       .update(updateData)
       .eq('id', orderId)
-      .eq('user_id', userId)
+    
+    if (!isAdmin) {
+      updateQuery = updateQuery.eq('user_id', userId)
+    }
+    
+    const { data: updatedOrder, error: updateError } = await updateQuery
       .select()
       .single()
 
