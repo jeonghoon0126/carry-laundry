@@ -31,6 +31,33 @@ export async function GET() {
 
     if (error) {
       console.error('Error fetching nickname:', error)
+      
+      // 프로필이 없는 경우 생성
+      if (error.code === 'PGRST116' || error.message.includes('No rows found')) {
+        console.log('Profile not found, creating new profile for user:', userId)
+        
+        const newNickname = generateNicknameWithNumber()
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            id: userId,
+            nickname: newNickname,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select('nickname')
+          .single()
+
+        if (createError) {
+          console.error('Error creating profile:', createError)
+          return NextResponse.json({ error: 'Failed to create profile' }, { status: 500 })
+        }
+
+        return NextResponse.json({ 
+          nickname: newProfile?.nickname || newNickname 
+        })
+      }
+      
       return NextResponse.json({ error: 'Failed to fetch nickname' }, { status: 500 })
     }
 
