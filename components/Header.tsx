@@ -45,7 +45,7 @@ export default function Header() {
                   {getUserInitials(session.user?.name)}
                 </div>
                 <span className="text-sm font-medium text-blue-900">
-                  😀 {session.user?.nickname || getDisplayName(session.user?.name)}님 로그인됨
+                  😀 {session.user?.nickname || session.user?.name || '고객'}님 로그인됨
                 </span>
               </div>
               <button

@@ -51,7 +51,7 @@ export default function UserStatus() {
           {initials}
         </div>
         <span className="text-sm font-medium text-blue-900">
-          😀 {displayName}님 로그인됨
+          😀 {session.user?.nickname || session.user?.name || '고객'}님 로그인됨
         </span>
       </div>
 
