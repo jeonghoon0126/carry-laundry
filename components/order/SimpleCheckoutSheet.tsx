@@ -117,6 +117,27 @@ export default function SimpleCheckoutSheet({ isLoading = false, shippingAddress
       if (tossPaymentsError || !isTossScriptLoaded) {
         throw new Error('Toss Payments not ready');
       }
+      // Debug order creation first
+      console.log('Debugging order creation...')
+      const debugResponse = await fetch('/api/debug/order-creation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: nickname || '고객',
+          phone,
+          address: shippingAddress?.address1 || address,
+        })
+      })
+      
+      const debugResult = await debugResponse.json()
+      console.log('Debug result:', debugResult)
+      
+      if (!debugResponse.ok) {
+        throw new Error(`Debug failed: ${debugResult.error} (step: ${debugResult.step})`)
+      }
+
       // Create order
       const orderResponse = await fetch('/api/orders', {
         method: 'POST',
