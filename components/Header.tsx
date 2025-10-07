@@ -34,6 +34,7 @@ export default function Header() {
             width={120} 
             height={40} 
             priority 
+            style={{ width: 'auto', height: 'auto' }}
           />
         </Link>
         <div className="flex items-center gap-3">

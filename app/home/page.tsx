@@ -16,13 +16,15 @@ export default function HomePage() {
   const { setIsOrderProgressVisible } = useOrderProgress()
   const [showOrderProgress, setShowOrderProgress] = useState(false)
   const [hasActiveOrder, setHasActiveOrder] = useState(false)
+  const [isLoadingOrderStatus, setIsLoadingOrderStatus] = useState(true)
   
   // 디버깅을 위한 로그
   console.log('HomePage Debug:', {
     showOrderProgress,
     hasActiveOrder,
     sessionUser: !!session?.user,
-    shouldHideCTA: hasActiveOrder && !!session?.user
+    isLoadingOrderStatus,
+    shouldHideCTA: (hasActiveOrder && !!session?.user) || isLoadingOrderStatus
   })
 
   // 바텀시트 상태가 변경될 때마다 전역 상태 동기화
@@ -31,23 +33,26 @@ export default function HomePage() {
   }, [showOrderProgress, setIsOrderProgressVisible])
 
   // 활성 주문이 있을 때도 CTA 숨기기 (주문 진행상황 버튼이 보일 때)
+  // 로딩 중일 때도 CTA 숨기기 (깜빡임 방지)
   useEffect(() => {
-    if (hasActiveOrder && session?.user) {
+    if ((hasActiveOrder && session?.user) || isLoadingOrderStatus) {
       setIsOrderProgressVisible(true)
     } else {
       setIsOrderProgressVisible(showOrderProgress)
     }
-  }, [hasActiveOrder, session?.user, showOrderProgress, setIsOrderProgressVisible])
+  }, [hasActiveOrder, session?.user, showOrderProgress, isLoadingOrderStatus, setIsOrderProgressVisible])
 
   // 로그인된 사용자의 활성 주문 확인
   useEffect(() => {
     if (!session?.user) {
       setHasActiveOrder(false)
+      setIsLoadingOrderStatus(false)
       return
     }
 
     const checkActiveOrder = async () => {
       try {
+        setIsLoadingOrderStatus(true)
         const response = await fetch('/api/orders/latest')
         if (response.ok) {
           const order = await response.json()
@@ -56,6 +61,8 @@ export default function HomePage() {
       } catch (error) {
         console.error('Error checking active order:', error)
         setHasActiveOrder(false)
+      } finally {
+        setIsLoadingOrderStatus(false)
       }
     }
 
