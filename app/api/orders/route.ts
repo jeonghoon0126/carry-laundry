@@ -78,26 +78,32 @@ export async function POST(request: Request) {
   try {
     // Parse request body
     const body = await request.json()
+    console.log('Order creation request body:', JSON.stringify(body, null, 2))
     const { name, phone, address } = body
 
-    // Basic validation
+    // Basic validation with detailed logging
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      console.error('Name validation failed:', { name, type: typeof name })
       return NextResponse.json({
         error: "이름을 입력해주세요."
       }, { status: 400 })
     }
 
     if (!phone || typeof phone !== 'string' || phone.trim().length === 0) {
+      console.error('Phone validation failed:', { phone, type: typeof phone })
       return NextResponse.json({
         error: "전화번호를 입력해주세요."
       }, { status: 400 })
     }
 
     if (!address || typeof address !== 'string' || address.trim().length === 0) {
+      console.error('Address validation failed:', { address, type: typeof address })
       return NextResponse.json({
         error: "주소를 입력해주세요."
       }, { status: 400 })
     }
+
+    console.log('Order validation passed:', { name, phone, address })
 
     // Geocode address and validate Gwanak-gu
     let geocodeResult
@@ -126,29 +132,39 @@ export async function POST(request: Request) {
     const supabase = createClient(supabaseUrl, supabaseServiceRole)
 
     // Insert order with normalized location data
+    const orderData = {
+      name: name.trim(),
+      phone: phone.trim(),
+      address: address.trim(),
+      user_id: session.user.id,
+      si,
+      gu,
+      dong,
+      lat,
+      lng,
+      is_serviceable: true,
+      paid: false,
+      payment_amount: 0
+    }
+    
+    console.log('Inserting order with data:', JSON.stringify(orderData, null, 2))
+    
     const { data, error } = await supabase
       .from('orders')
-      .insert({
-        name: name.trim(),
-        phone: phone.trim(),
-        address: address.trim(),
-        user_id: session.user.id,
-        si,
-        gu,
-        dong,
-        lat,
-        lng,
-        is_serviceable: true,
-        paid: false,
-        payment_amount: 0
-      })
+      .insert(orderData)
       .select()
       .single()
 
     if (error) {
-      console.error('Database insert error:', error.code)
+      console.error('Database insert error:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      })
       return NextResponse.json({
-        error: "주문 처리 중 오류가 발생했습니다."
+        error: "주문 처리 중 오류가 발생했습니다.",
+        details: error.message
       }, { status: 500 })
     }
 
