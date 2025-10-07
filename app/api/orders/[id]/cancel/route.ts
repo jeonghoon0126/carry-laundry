@@ -96,7 +96,14 @@ export async function POST(
 
     // 이미 취소된 주문인지 확인
     if (order.status === 'cancelled') {
-      return NextResponse.json({ error: 'Order already cancelled' }, { status: 400 })
+      return NextResponse.json({ 
+        error: '이미 취소된 주문입니다',
+        details: '해당 주문은 이미 취소되었습니다.',
+        debug: {
+          orderId,
+          currentStatus: order.status
+        }
+      }, { status: 400 })
     }
 
     // 결제가 완료된 주문인 경우 토스페이먼츠 취소 처리

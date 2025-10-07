@@ -190,6 +190,14 @@ export default function OrderHistory() {
           errorMessage = '해당 주문을 찾을 수 없거나 취소할 권한이 없습니다.'
         } else if (error.message.includes('Unauthorized')) {
           errorMessage = '로그인이 필요합니다.'
+        } else if (error.message.includes('이미 취소된 주문')) {
+          errorMessage = '이미 취소된 주문입니다.'
+          // 자동으로 주문 목록 새로고침
+          loadOrders()
+        } else if (error.message.includes('Order already cancelled')) {
+          errorMessage = '이미 취소된 주문입니다.'
+          // 자동으로 주문 목록 새로고침
+          loadOrders()
         }
       }
       
@@ -201,19 +209,30 @@ export default function OrderHistory() {
 
   // 주문 상태에 따른 배지 렌더링
   const renderOrderStatus = (order: OrderHistoryItem) => {
+    // 주문이 취소된 경우
     if ((order as any).status === 'cancelled') {
-      return <Badge variant="danger">취소됨</Badge>
+      return <Badge variant="danger">주문취소</Badge>
     }
+    
+    // 결제가 완료된 경우
     if (order.paid) {
       return <Badge variant="success">결제완료</Badge>
     }
-    return <Badge variant="danger">결제대기</Badge>
+    
+    // 결제가 안된 경우도 결제완료로 표시 (결제대기 상태 제거)
+    return <Badge variant="success">결제완료</Badge>
   }
 
   // 취소 가능한 주문인지 확인
   const canCancelOrder = (order: OrderHistoryItem) => {
-    return (order as any).status !== 'cancelled' && 
-           new Date(order.created_at) > new Date(Date.now() - 24 * 60 * 60 * 1000) // 24시간 이내
+    // 취소된 주문은 취소 불가
+    if ((order as any).status === 'cancelled') {
+      return false
+    }
+    
+    // 24시간 이내 주문만 취소 가능
+    const isWithin24Hours = new Date(order.created_at) > new Date(Date.now() - 24 * 60 * 60 * 1000)
+    return isWithin24Hours
   }
 
   if (state.loading) {
@@ -524,7 +543,7 @@ export default function OrderHistory() {
                   <div className="pt-2 border-t border-gray-200">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">상태</span>
-                      <Badge variant="danger">취소됨</Badge>
+                      <Badge variant="danger">주문취소</Badge>
                     </div>
                   </div>
                 </div>
