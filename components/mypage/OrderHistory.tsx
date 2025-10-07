@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import EmptyState from '@/components/common/EmptyState'
 import { SkeletonOrderCard } from '@/components/common/Skeleton'
 import Badge from '@/components/ui/Badge'
+import { X, AlertTriangle } from 'lucide-react'
 
 interface OrderHistoryState {
   orders: OrderHistoryItem[]
@@ -17,6 +18,13 @@ interface OrderHistoryState {
   error: string | null
 }
 
+interface CancelModalState {
+  isOpen: boolean
+  orderId: string | null
+  orderNumber: string | null
+  isCancelling: boolean
+}
+
 export default function OrderHistory() {
   const [state, setState] = useState<OrderHistoryState>({
     orders: [],
@@ -24,6 +32,12 @@ export default function OrderHistory() {
     loading: true,
     loadingMore: false,
     error: null
+  })
+  const [cancelModal, setCancelModal] = useState<CancelModalState>({
+    isOpen: false,
+    orderId: null,
+    orderNumber: null,
+    isCancelling: false
   })
   const router = useRouter()
 
@@ -66,6 +80,76 @@ export default function OrderHistory() {
 
   const handleOrderClick = () => {
     router.push('/order')
+  }
+
+  // 주문 취소 모달 열기
+  const handleCancelClick = (orderId: string, orderNumber: string) => {
+    setCancelModal({
+      isOpen: true,
+      orderId,
+      orderNumber,
+      isCancelling: false
+    })
+  }
+
+  // 주문 취소 모달 닫기
+  const handleCancelModalClose = () => {
+    setCancelModal({
+      isOpen: false,
+      orderId: null,
+      orderNumber: null,
+      isCancelling: false
+    })
+  }
+
+  // 주문 취소 실행
+  const handleCancelConfirm = async () => {
+    if (!cancelModal.orderId) return
+
+    try {
+      setCancelModal(prev => ({ ...prev, isCancelling: true }))
+      
+      const response = await fetch(`/api/orders/${cancelModal.orderId}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: '고객 요청에 의한 취소' })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || '주문 취소에 실패했습니다')
+      }
+
+      // 주문 목록 새로고침
+      await loadOrders()
+      
+      // 모달 닫기
+      handleCancelModalClose()
+      
+      alert('주문이 성공적으로 취소되었습니다')
+    } catch (error) {
+      console.error('Error cancelling order:', error)
+      alert(error instanceof Error ? error.message : '주문 취소 중 오류가 발생했습니다')
+    } finally {
+      setCancelModal(prev => ({ ...prev, isCancelling: false }))
+    }
+  }
+
+  // 주문 상태에 따른 배지 렌더링
+  const renderOrderStatus = (order: OrderHistoryItem) => {
+    if ((order as any).status === 'cancelled') {
+      return <Badge variant="danger">취소됨</Badge>
+    }
+    if (order.paid) {
+      return <Badge variant="success">결제완료</Badge>
+    }
+    return <Badge variant="danger">결제대기</Badge>
+  }
+
+  // 취소 가능한 주문인지 확인
+  const canCancelOrder = (order: OrderHistoryItem) => {
+    return (order as any).status !== 'cancelled' && 
+           new Date(order.created_at) > new Date(Date.now() - 24 * 60 * 60 * 1000) // 24시간 이내
   }
 
   if (state.loading) {
@@ -142,6 +226,9 @@ export default function OrderHistory() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     결제금액
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    액션
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -163,14 +250,23 @@ export default function OrderHistory() {
                       #{order.id}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge variant={order.paid === true ? 'success' : 'danger'}>
-                        {order.paid === true ? '결제완료' : '미결제/실패'}
-                      </Badge>
+                      {renderOrderStatus(order)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                       <span className={order.paid === true ? "text-gray-900 font-semibold" : "text-gray-500"}>
                         {order.payment_amount ? order.payment_amount.toLocaleString("ko-KR") + "원" : "-"}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                      {canCancelOrder(order) && (
+                        <button
+                          onClick={() => handleCancelClick(order.id.toString(), `#${order.id}`)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                          취소
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -183,7 +279,7 @@ export default function OrderHistory() {
         <div className="md:hidden space-y-4">
           {state.orders.map((order) => (
             <div key={order.id} className="bg-white rounded-2xl shadow-sm p-4 hover:ring-1 hover:ring-[#13C2C2]/20 hover:-translate-y-[1px] transition">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 mb-3">
                 <div>
                   <div className="text-xs text-gray-500 mb-1">주문일시</div>
                   <div className="text-sm text-gray-900">{formatOrderDate(order.created_at)}</div>
@@ -195,9 +291,7 @@ export default function OrderHistory() {
                 <div>
                   <div className="text-xs text-gray-500 mb-1">결제상태</div>
                   <div>
-                    <Badge variant={order.paid === true ? 'success' : 'danger'}>
-                      {order.paid === true ? '결제완료' : '미결제/실패'}
-                    </Badge>
+                    {renderOrderStatus(order)}
                   </div>
                 </div>
                 <div className="text-right">
@@ -207,6 +301,19 @@ export default function OrderHistory() {
                   </div>
                 </div>
               </div>
+              
+              {/* Mobile Action Button */}
+              {canCancelOrder(order) && (
+                <div className="pt-3 border-t border-gray-100">
+                  <button
+                    onClick={() => handleCancelClick(order.id.toString(), `#${order.id}`)}
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                    주문 취소
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -237,6 +344,59 @@ export default function OrderHistory() {
       <div className="text-center text-sm text-gray-500">
         총 {state.orders.length}개 주문
       </div>
+
+      {/* Cancel Confirmation Modal */}
+      {cancelModal.isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-200">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="w-8 h-8 text-red-600" />
+              </div>
+              
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                주문을 취소하시겠어요?
+              </h3>
+              
+              <div className="text-sm text-gray-600 mb-6 space-y-1">
+                <p>주문번호: <span className="font-mono">{cancelModal.orderNumber}</span></p>
+                <p className="text-red-600 font-medium">
+                  취소 후에는 복구할 수 없습니다.
+                </p>
+                {state.orders.find(o => o.id.toString() === cancelModal.orderId)?.paid && (
+                  <p className="text-blue-600 text-xs">
+                    결제된 금액은 자동으로 환불됩니다.
+                  </p>
+                )}
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={handleCancelModalClose}
+                  disabled={cancelModal.isCancelling}
+                  className="flex-1 px-4 py-3 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                >
+                  아니요
+                </button>
+                <button
+                  onClick={handleCancelConfirm}
+                  disabled={cancelModal.isCancelling}
+                  className="flex-1 px-4 py-3 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {cancelModal.isCancelling ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      취소 중...
+                    </>
+                  ) : (
+                    '주문 취소'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
