@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useSession } from 'next-auth/react'
 import { motion } from 'framer-motion'
 import Skeleton, { SkeletonCard } from '@/components/common/Skeleton'
 import { RefreshCw, Search, TrendingUp, Users, Package, CreditCard, AlertCircle, X, AlertTriangle, Play, CheckCircle, Truck } from 'lucide-react'
@@ -53,6 +54,7 @@ interface StatusUpdateModalState {
 }
 
 export default function AdminPage() {
+  const { data: session } = useSession()
   const [orders, setOrders] = useState<Order[] | null>(null)
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -151,7 +153,7 @@ export default function AdminPage() {
       const response = await fetch(`/api/orders/${cancelModal.orderId}/cancel`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: '관리자에 의한 취소' })
+        body: JSON.stringify({ reason: '고객 요청에 의한 취소' })
       })
 
       if (!response.ok) {
@@ -243,10 +245,14 @@ export default function AdminPage() {
     }
   }
 
-  // 취소 가능한 주문인지 확인 (어드민은 모든 결제완료 주문 취소 가능)
+  // 환불을 수반하는 취소는 로그인 계정 본인 주문에만 허용
   const canCancelOrder = (order: Order) => {
     // 결제가 완료되었고 취소되지 않은 주문만 취소 가능
-    return order.paid === true && order.status !== 'cancelled'
+    const user = session?.user
+    const viewerId = user && 'id' in user ? user.id : null
+    return (typeof viewerId === 'string' || typeof viewerId === 'number') &&
+      order.user_id === String(viewerId) &&
+      order.paid === true && order.status !== 'cancelled'
   }
 
   // 주문 상태 변경 가능 여부 확인
@@ -893,7 +899,7 @@ export default function AdminPage() {
                 <div className="text-sm text-gray-600 mb-6 space-y-1">
                   <p>주문번호: <span className="font-mono">{cancelModal.orderNumber}</span></p>
                   <p className="text-red-600 font-medium">
-                    관리자 권한으로 주문을 취소합니다.
+                    본인 명의 주문을 취소합니다.
                   </p>
                   <p className="text-blue-600 text-xs">
                     결제된 금액은 자동으로 환불됩니다.

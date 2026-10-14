@@ -1,39 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServer } from '@/lib/supabase-server'
 import { getServerSession } from 'next-auth'
+import { getOrderAccess } from '@/lib/order-access'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    console.log('=== ORDER CANCELLATION START ===')
-    console.log('Request params:', params)
-    
     const session = await getServerSession(authOptions)
-    console.log('Cancel API - Session:', session)
-    
-    if (!session?.user) {
-      console.log('No session found')
+    const { userId } = getOrderAccess(session?.user)
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    const { id: orderId } = await params
 
-    const userId = (session.user as any).id
-    console.log('User ID:', userId)
-    if (!userId) {
-      console.log('No user ID in session')
-      return NextResponse.json({ error: 'User ID not found' }, { status: 401 })
-    }
-
-    const orderId = params.id
-    console.log('Order ID:', orderId)
-    
     let body
     try {
       body = await request.json()
       console.log('Request body:', body)
-    } catch (e) {
+    } catch {
       console.log('No request body, using default reason')
       body = {}
     }
@@ -43,63 +30,17 @@ export async function POST(
     const supabase = getSupabaseServer()
     console.log('Supabase client obtained')
     
-    // 어드민 권한 확인 (이메일 기반)
-    const isAdmin = session.user?.email === 'admin@carry-laundry.com' || 
-                   session.user?.email?.endsWith('@carry-laundry.com')
-    
-    console.log('Admin check:', { 
-      email: session.user?.email, 
-      isAdmin 
-    })
-
-    // 주문 정보 조회 (어드민은 모든 주문, 일반 사용자는 자신의 주문만)
-    console.log('Fetching order from database...')
-    let orderQuery = supabase
+    // The old email-only admin exception is untrusted. Do not grant a new
+    // cross-owner refund capability to the status administrator implicitly.
+    const { data: order, error: fetchError } = await supabase
       .from('orders')
       .select('*')
       .eq('id', orderId)
-    
-    if (!isAdmin) {
-      orderQuery = orderQuery.eq('user_id', userId)
-    }
-    
-    const { data: order, error: fetchError } = await orderQuery.single()
+      .eq('user_id', userId)
+      .single()
 
-    console.log('Order fetch result:', { order, fetchError })
-
-    if (fetchError) {
-      console.error('Error fetching order:', fetchError)
-      return NextResponse.json({ 
-        error: 'Order not found or access denied',
-        details: fetchError.message,
-        debug: {
-          orderId,
-          userId,
-          error: fetchError
-        }
-      }, { status: 404 })
-    }
-
-    if (!order) {
-      console.error('No order found for ID:', orderId, 'User ID:', userId, 'Is Admin:', isAdmin)
-      
-      // 디버그 정보 제공
-      const { data: userOrders } = await supabase
-        .from('orders')
-        .select('id')
-        .eq('user_id', userId)
-      
-      return NextResponse.json({ 
-        error: isAdmin 
-          ? `Order ${orderId} not found` 
-          : 'Order not found or you do not have permission to cancel this order',
-        debug: {
-          requestedOrderId: orderId,
-          userId,
-          isAdmin,
-          userOrderIds: userOrders?.map(o => o.id) || []
-        }
-      }, { status: 404 })
+    if (fetchError || !order) {
+      return NextResponse.json({ error: 'Order not found or access denied' }, { status: 404 })
     }
 
     console.log('Order details:', {
@@ -161,7 +102,7 @@ export async function POST(
     // 주문 상태를 취소로 업데이트
     console.log('Updating order status to cancelled...')
     
-    const updateData: any = {
+    const updateData: Record<string, string> = {
       cancelled_at: new Date().toISOString(),
       cancel_reason: reason || '고객 요청에 의한 취소',
       updated_at: new Date().toISOString()
@@ -177,17 +118,12 @@ export async function POST(
     
     console.log('Update data:', updateData)
     
-    // 업데이트 쿼리 (어드민은 모든 주문, 일반 사용자는 자신의 주문만)
-    let updateQuery = supabase
+    // Keep ownership on the write as well as the read.
+    const { data: updatedOrder, error: updateError } = await supabase
       .from('orders')
       .update(updateData)
       .eq('id', orderId)
-    
-    if (!isAdmin) {
-      updateQuery = updateQuery.eq('user_id', userId)
-    }
-    
-    const { data: updatedOrder, error: updateError } = await updateQuery
+      .eq('user_id', userId)
       .select()
       .single()
 

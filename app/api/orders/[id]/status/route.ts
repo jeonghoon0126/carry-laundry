@@ -3,6 +3,7 @@ import { getSupabaseServer } from '@/lib/supabase-server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import { OrderStatus } from '@/lib/types/order'
+import { getOrderAccess } from '@/lib/order-access'
 import { canChangeOrderStatus } from '@/lib/utils/orderStatus'
 
 export const runtime = 'nodejs'
@@ -14,53 +15,13 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // 인증 확인
     const session = await getServerSession(authOptions)
-    if (!session?.user) {
+    const { userId, isAdmin } = getOrderAccess(session?.user)
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    const userId = (session.user as any).id
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID not found' }, { status: 401 })
-    }
-
-    // 관리자 권한 확인
-    const userEmail = session.user.email || ''
-    const userName = session.user.name || ''
-    const userIdString = session.user.id?.toString() || ''
-    
-    console.log('Admin check - Session user:', {
-      email: userEmail,
-      name: userName,
-      id: userIdString,
-      fullSession: session.user
-    })
-    
-    // 관리자 확인: 이메일, 이름, 또는 특정 사용자 ID로 확인
-    const isAdmin = userEmail === 'admin@carry-laundry.com' || 
-                   userEmail.endsWith('@carry-laundry.com') ||
-                   userName === 'admin' ||
-                   userIdString === '4475158066' // 현재 로그인된 사용자 ID
-    
-    console.log('Admin check result:', {
-      userEmail,
-      userName,
-      userIdString,
-      isAdmin
-    })
-    
     if (!isAdmin) {
-      return NextResponse.json({ 
-        error: 'Admin access required',
-        debug: {
-          userEmail,
-          userName,
-          userIdString,
-          hasEmail: !!userEmail,
-          hasName: !!userName
-        }
-      }, { status: 403 })
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
     const { id } = await params
@@ -110,7 +71,7 @@ export async function PUT(
     }
 
     // 상태별 타임스탬프 설정
-    const updateData: any = {
+    const updateData: Record<string, string | null> = {
       status,
       updated_at: new Date().toISOString()
     }
@@ -222,7 +183,7 @@ export async function PUT(
       // 로그 실패는 치명적이지 않으므로 계속 진행
     }
 
-    console.log(`Order ${orderId} status changed from ${order.status} to ${status} by ${userEmail}`)
+    console.log(`Order ${orderId} status changed from ${order.status} to ${status} by administrator`)
 
     return NextResponse.json({
       success: true,

@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 import 'server-only'
+import { getOrderAccess } from '@/lib/order-access'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { geocodeAddress } from '@/lib/kakao'
@@ -10,48 +11,34 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 
 export async function GET() {
-  const supabaseUrl =
-    process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE
-
-  // Temporary diagnostics - remove after verification
-  if (!supabaseUrl || !supabaseServiceRole) {
-    return NextResponse.json({
-      ok: false,
-      why: "env",
-      urlSet: !!supabaseUrl,
-      roleSet: !!supabaseServiceRole,
-      urlHost: supabaseUrl ? new URL(supabaseUrl).hostname : "missing"
-    }, { status: 400 })
-  }
-
   try {
-    // Create client at runtime (avoid top-level creation)
-    const supabase = createClient(supabaseUrl, supabaseServiceRole)
+    const session = await getServerSession(authOptions)
+    const { userId, isAdmin } = getOrderAccess(session?.user)
+    if (!userId) {
+      return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 })
+    }
 
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
+    const supabaseUrl = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE
+    if (!supabaseUrl || !supabaseServiceRole) {
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceRole)
+    let query = supabase.from('orders').select('*')
+    if (!isAdmin) {
+      query = query.eq('user_id', String(userId))
+    }
+    const { data, error } = await query
       .order('created_at', { ascending: false })
       .limit(200)
 
     if (error) {
-      // Mask sensitive information in error response
-      const safeError = error.message.replace(/eyJ[A-Za-z0-9_-]+/g, '[MASKED_JWT]')
-      return NextResponse.json({ 
-        error: safeError,
-        code: error.code || 'unknown'
-      }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to fetch orders' }, { status: 500 })
     }
-    
-    return NextResponse.json(data)
-  } catch (err: any) {
-    // Catch and return Supabase error message (mask secrets)
-    const safeError = err.message?.replace(/eyJ[A-Za-z0-9_-]+/g, '[MASKED_JWT]') || 'Unknown error'
-    return NextResponse.json({ 
-      error: safeError,
-      type: 'client_error'
-    }, { status: 500 })
+    return NextResponse.json(data, { headers: { 'Cache-Control': 'private, no-store' } })
+  } catch {
+    return NextResponse.json({ error: 'Failed to fetch orders' }, { status: 500 })
   }
 }
 
