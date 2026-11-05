@@ -11,11 +11,16 @@ export default function Footer() {
           <li>통신판매업신고 : 2024-인천계양-1064</li>
           <li>고객센터 : <a href="tel:01094320293" className="underline hover:no-underline">010-9432-0293</a></li>
         </ul>
-        <p className="pt-2 text-gray-500">©Laundrypeople. ALL RIGHTS RESERVED</p>
+        <p className="pt-2 text-gray-500">©Carrie. ALL RIGHTS RESERVED</p>
+        <p className="text-xs text-gray-500 pt-0.5">
+          주요 서비스: 세탁 O2O &apos;캐리&apos; · 반려동물 라이프케어 &apos;<a href="/pigaehaenggae" className="text-gray-700 underline font-medium hover:text-[#13C2C2]">피개행개</a>&apos;
+        </p>
         <div className="pt-1 flex items-center gap-3">
           <a href="/terms" className="hover:underline">이용약관</a>
           <span className="text-gray-400">|</span>
           <a href="/privacy" className="hover:underline">개인정보 처리방침</a>
+          <span className="text-gray-400">|</span>
+          <a href="/pigaehaenggae" className="hover:underline text-[#13C2C2]">피개행개 공식 웹</a>
         </div>
       </div>
     </footer>
