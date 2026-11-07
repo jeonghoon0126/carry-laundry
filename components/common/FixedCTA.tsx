@@ -26,6 +26,8 @@ export default function FixedCTA() {
                      pathname.startsWith('/auth/guest-gate') || 
                      pathname.startsWith('/mypage') || 
                      pathname.startsWith('/pigaehaenggae') || 
+                     pathname.startsWith('/terms') || 
+                     pathname.startsWith('/privacy') || 
                      isOrderProgressVisible
   
   if (shouldHide) {
