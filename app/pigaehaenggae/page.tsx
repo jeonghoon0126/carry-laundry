@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { MapPin, Filter, Bot, Heart, ShieldCheck, Smartphone, CheckCircle, Mail, Phone, Building, CreditCard, Sparkles, Check, ArrowRight } from 'lucide-react'
+import PaymentButton from './PaymentButton'
 
 export const metadata: Metadata = {
   title: '피개행개 - 큰 개도 갈 수 있는 곳 | 캐리 (Carrie)',
@@ -148,15 +149,18 @@ export default function PigaehaenggaePage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-bold text-slate-700 bg-white px-3 py-1 rounded-full border border-slate-200">
-                    1개월 라이선스
+                    1개월 이용권 (단건 결제)
                   </span>
                   <span className="text-xs text-slate-500">부가가치세(VAT) 포함</span>
                 </div>
                 <h3 className="text-xl font-bold text-slate-900">베이직 멤버십</h3>
                 <div className="flex items-baseline gap-1">
                   <span className="text-3xl font-extrabold text-slate-900">14,900</span>
-                  <span className="text-sm font-semibold text-slate-600">원 / 월</span>
+                  <span className="text-sm font-semibold text-slate-600">원 (일시불)</span>
                 </div>
+                <p className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md inline-block">
+                  ※ 단건 결제 상품 · 기간 만료 시 자동 결제 없음
+                </p>
                 <p className="text-xs text-slate-500 leading-relaxed">
                   일상 속 산책과 플레이스 탐색을 가볍고 편리하게 시작하고 싶은 견주님을 위한 표준 플랜입니다.
                 </p>
@@ -180,9 +184,7 @@ export default function PigaehaenggaePage() {
                 </ul>
               </div>
               <div className="pt-2">
-                <div className="w-full py-3 rounded-xl bg-slate-200 text-slate-700 font-bold text-sm text-center flex items-center justify-center gap-2 cursor-pointer hover:bg-slate-300 transition-colors">
-                  <CreditCard className="w-4 h-4" /> 결제하기 (신청 오픈 예정)
-                </div>
+                <PaymentButton planName="피개행개 베이직 1개월 이용권" amount={14900} variant="secondary" />
               </div>
             </div>
 
@@ -194,15 +196,18 @@ export default function PigaehaenggaePage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-                    1년 프리미엄 패스
+                    1년 이용권 (단건 결제)
                   </span>
                   <span className="text-xs text-slate-500">부가가치세(VAT) 포함</span>
                 </div>
                 <h3 className="text-xl font-bold text-slate-900">프리미엄 패스</h3>
                 <div className="flex items-baseline gap-1">
                   <span className="text-3xl font-extrabold text-emerald-600">49,000</span>
-                  <span className="text-sm font-semibold text-slate-600">원 / 년</span>
+                  <span className="text-sm font-semibold text-slate-600">원 (일시불)</span>
                 </div>
+                <p className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md inline-block">
+                  ※ 단건 결제 상품 · 기간 만료 시 자동 결제 없음
+                </p>
                 <p className="text-xs text-slate-500 leading-relaxed">
                   피개행개의 모든 첨단 AI 코스 생성과 전국의 숨은 오프리시 스팟을 1년 내내 무제한으로 즐기는 플랜입니다.
                 </p>
@@ -230,9 +235,7 @@ export default function PigaehaenggaePage() {
                 </ul>
               </div>
               <div className="pt-2">
-                <div className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-sm text-center flex items-center justify-center gap-2 cursor-pointer hover:from-emerald-700 hover:to-teal-700 transition-all shadow-md">
-                  <CreditCard className="w-4 h-4" /> 결제하기 (신청 오픈 예정)
-                </div>
+                <PaymentButton planName="피개행개 프리미엄 1년 이용권" amount={49000} variant="primary" />
               </div>
             </div>
           </div>
@@ -315,7 +318,7 @@ export default function PigaehaenggaePage() {
             <div><strong>대표자:</strong> 함정훈 (Jeonghoon Ham)</div>
             <div><strong>사업자등록번호:</strong> 521-23-01693</div>
             <div><strong>업태 / 종목:</strong> 정보통신업 / 응용 소프트웨어 개발 및 공급업 (722000)</div>
-            <div><strong>사업장 소재지:</strong> 인천광역시 부평구 부평동 908-1</div>
+            <div><strong>사업장 소재지:</strong> 인천광역시 부평구 길주남로73번길 33-7, 1층 (부평동)</div>
             <div><strong>연구·개발 사무소:</strong> 서울특별시 강북구 솔샘로59길 18 303호</div>
             <div><strong>대표 이메일:</strong> kham0126@gmail.com</div>
             <div><strong>AWS 계정 이메일:</strong> kham0126+aws@gmail.com</div>
@@ -340,6 +343,11 @@ export default function PigaehaenggaePage() {
               <span>|</span>
               <Link href="/privacy" className="hover:underline text-slate-700 font-medium">개인정보 처리방침</Link>
             </div>
+          </div>
+          <div className="space-y-1 text-[11px] text-slate-500 leading-relaxed border-t border-slate-100 pt-3">
+            <div>상호명: 캐리 (Carrie) | 대표자: 함정훈 | 사업자등록번호: 521-23-01693 | 통신판매업신고: 결제연동 완료 후 신고 진행 중</div>
+            <div>사업장 소재지: 인천광역시 부평구 길주남로73번길 33-7, 1층 (부평동) | 고객센터: 010-9432-0293 | 이메일: kham0126@gmail.com</div>
+            <div>결제대행 서비스: (주)코리아포트원, 토스페이먼츠(주) (안전한 에스크로 및 카드결제 시스템)</div>
           </div>
           <p className="text-slate-400">
             © 2024-2026 Carrie. All rights reserved. 본 웹사이트는 캐리(Carrie)가 개발·운영하는 반려동물 AI 산책 소프트웨어 &apos;피개행개&apos;의 공식 웹사이트입니다.

@@ -67,8 +67,8 @@ export default function PrivacyPage() {
               회사는 이용자의 개인정보를 명시된 범위를 초과하여 제3자에게 제공하지 않습니다. 원활한 서비스 제공과 안전한 전자결제 처리를 위해 다음과 같이 개인정보 처리업무를 위탁하고 있습니다.
             </p>
             <div className="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 text-xs space-y-1">
-              <div><strong>수탁업체:</strong> 토스페이먼츠(주)</div>
-              <div><strong>위탁업무 내용:</strong> 신용카드, 계좌이체, 간편결제 등 전자결제 대행 및 에스크로(구매안전) 서비스 제공</div>
+              <div><strong>수탁업체:</strong> (주)코리아포트원, 토스페이먼츠(주)</div>
+              <div><strong>위탁업무 내용:</strong> 전자결제 연동 API 및 신용카드, 계좌이체, 간편결제 등 전자결제 대행 및 에스크로(구매안전) 서비스 제공</div>
               <div><strong>보유 및 이용기간:</strong> 회원 탈퇴 시 또는 결제 대행 위탁 계약 종료 시까지 (관계 법령 준수)</div>
             </div>
           </section>
@@ -87,7 +87,7 @@ export default function PrivacyPage() {
               <div><strong>소속/직책:</strong> 캐리 (Carrie) / 대표</div>
               <div><strong>연락처:</strong> 010-9432-0293</div>
               <div><strong>이메일:</strong> kham0126@gmail.com</div>
-              <div><strong>주소:</strong> 인천광역시 부평구 부평동 908-1 (서울 연구소: 서울특별시 강북구 솔샘로59길 18 303호)</div>
+              <div><strong>주소:</strong> 인천광역시 부평구 길주남로73번길 33-7, 1층 (부평동) (서울 연구소: 서울특별시 강북구 솔샘로59길 18 303호)</div>
             </div>
           </section>
 

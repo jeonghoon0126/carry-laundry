@@ -48,7 +48,7 @@ export default function TermsPage() {
               <div><strong>대표자:</strong> 함정훈</div>
               <div><strong>사업자등록번호:</strong> 521-23-01693</div>
               <div><strong>업태 / 종목:</strong> 정보통신업 / 응용 소프트웨어 개발 및 공급업</div>
-              <div><strong>사업장 소재지:</strong> 인천광역시 부평구 부평동 908-1</div>
+              <div><strong>사업장 소재지:</strong> 인천광역시 부평구 길주남로73번길 33-7, 1층 (부평동)</div>
               <div><strong>연구소 소재지:</strong> 서울특별시 강북구 솔샘로59길 18 303호</div>
               <div><strong>대표 전화번호:</strong> 010-9432-0293</div>
               <div><strong>대표 이메일:</strong> kham0126@gmail.com</div>
@@ -63,23 +63,26 @@ export default function TermsPage() {
             </p>
             <div className="grid sm:grid-cols-2 gap-3 pt-2">
               <div className="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 space-y-1">
-                <div className="font-bold text-slate-900 text-sm">피개행개 베이직 라이선스 (1개월)</div>
-                <div className="text-base font-extrabold text-emerald-600">14,900원</div>
+                <div className="font-bold text-slate-900 text-sm">피개행개 베이직 이용권 (1개월)</div>
+                <div className="text-base font-extrabold text-emerald-600">14,900원 (일시불)</div>
                 <div className="text-xs text-slate-500">전국 4,600+ 플레이스 무제한 조회, AI 산책 코스 일 5회 생성, 실시간 기상 연동</div>
               </div>
               <div className="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 space-y-1">
                 <div className="font-bold text-slate-900 text-sm">피개행개 프리미엄 패스 (1년)</div>
-                <div className="text-base font-extrabold text-emerald-600">49,000원</div>
+                <div className="text-base font-extrabold text-emerald-600">49,000원 (일시불)</div>
                 <div className="text-xs text-slate-500">베이직 전체 기능 + AI 산책 코스 무제한, 천연잔디 오프리시 비밀 스팟, 1:1 활동량 리포트</div>
               </div>
             </div>
+            <p className="text-xs text-slate-500 pt-1">
+              ※ 본 이용권은 정기결제(자동 연장)가 아니며, 기간 만료 시 자동 청구되지 않는 단건(일시불) 결제 상품입니다.
+            </p>
           </section>
 
           <section className="space-y-2">
             <h2 className="text-base font-bold text-slate-900">제4조 (결제 방법 및 구매 안전)</h2>
             <p>
               1. 이용자는 신용·체크카드, 계좌이체, 토스페이·네이버페이·카카오페이 등 회사가 제공하는 전자결제 수단을 통해 이용 요금을 결제할 수 있습니다.<br />
-              2. 모든 전자금융 결제는 토스페이먼츠(주)의 안전 결제 모듈 및 에스크로(구매안전서비스) 시스템을 통해 안전하게 처리됩니다.
+              2. 모든 전자금융 결제는 (주)코리아포트원 및 토스페이먼츠(주)의 전자결제 대행 시스템과 에스크로(구매안전서비스) 시스템을 통해 안전하게 처리됩니다.
             </p>
           </section>
 
