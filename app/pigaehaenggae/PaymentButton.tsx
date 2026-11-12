@@ -33,7 +33,7 @@ export default function PaymentButton({ planName, amount, variant = 'primary' }:
       const paymentId = `pghg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
       const response = await window.PortOne.requestPayment({
         storeId: 'store-b5db7fb0-7efb-488a-9436-96e195c272e1',
-        channelKey: 'channel-key-dc5fa12d-c110-4615-b264-3d475cab21e9',
+        channelKey: 'channel-key-cfbbdc86-f786-4c1c-a0f7-42c5fd14ba67',
         paymentId,
         orderName: planName,
         totalAmount: amount,
@@ -46,7 +46,7 @@ export default function PaymentButton({ planName, amount, variant = 'primary' }:
           alert(`결제 안내: ${response.message || '결제가 완료되지 않았습니다.'}`)
         }
       } else {
-        alert('테스트 결제가 성공적으로 완료되었습니다.')
+        alert('결제가 정상적으로 완료되었습니다. 피개행개 서비스를 이용해 주셔서 감사합니다!')
       }
     } catch (err: any) {
       console.error('Payment request error:', err)
