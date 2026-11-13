@@ -8,7 +8,7 @@ export default function Footer() {
           <li>대표 : 함 정훈</li>
           <li>주소 : 부평동 908-1</li>
           <li>이메일 : <a href="mailto:kham0126@gmail.com" className="underline hover:no-underline">kham0126@gmail.com</a></li>
-          <li>통신판매업신고 : 2024-인천계양-1064</li>
+          <li>통신판매업신고 : 제2026-인천부평-1914호</li>
           <li>고객센터 : <a href="tel:01094320293" className="underline hover:no-underline">010-9432-0293</a></li>
         </ul>
         <p className="pt-2 text-gray-500">©Carrie. ALL RIGHTS RESERVED</p>

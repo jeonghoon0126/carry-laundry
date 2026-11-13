@@ -52,7 +52,7 @@ export default function TermsPage() {
               <div><strong>연구소 소재지:</strong> 서울특별시 강북구 솔샘로59길 18 303호</div>
               <div><strong>대표 전화번호:</strong> 010-9432-0293</div>
               <div><strong>대표 이메일:</strong> kham0126@gmail.com</div>
-              <div><strong>통신판매업신고:</strong> 전자상거래법 제12조에 의거 결제 서비스(구매안전서비스) 연동 완료 후 관할 지자체 신고 진행 중</div>
+              <div><strong>통신판매업신고:</strong> 제2026-인천부평-1914호 (인천광역시 부평구청)</div>
             </div>
           </section>
 

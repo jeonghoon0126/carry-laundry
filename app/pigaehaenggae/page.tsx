@@ -325,7 +325,7 @@ export default function PigaehaenggaePage() {
             <div><strong>고객센터/연락처:</strong> 010-9432-0293</div>
             <div><strong>주요 서비스:</strong> 피개행개 (반려동물 AI 산책 솔루션)</div>
             <div className="sm:col-span-2 text-slate-500">
-              <strong>통신판매업신고:</strong> 전자결제(구매안전서비스) 연동 완료 후 관할 지자체 신고 진행 중
+              <strong>통신판매업신고:</strong> 제2026-인천부평-1914호
             </div>
           </div>
         </div>
@@ -345,7 +345,7 @@ export default function PigaehaenggaePage() {
             </div>
           </div>
           <div className="space-y-1 text-[11px] text-slate-500 leading-relaxed border-t border-slate-100 pt-3">
-            <div>상호명: 캐리 (Carrie) | 대표자: 함정훈 | 사업자등록번호: 521-23-01693 | 통신판매업신고: 결제연동 완료 후 신고 진행 중</div>
+            <div>상호명: 캐리 (Carrie) | 대표자: 함정훈 | 사업자등록번호: 521-23-01693 | 통신판매업신고: 제2026-인천부평-1914호</div>
             <div>사업장 소재지: 인천광역시 부평구 길주남로73번길 33-7, 1층 (부평동) | 고객센터: 010-9432-0293 | 이메일: kham0126@gmail.com</div>
             <div>결제대행 서비스: (주)코리아포트원, 토스페이먼츠(주) (안전한 에스크로 및 카드결제 시스템)</div>
           </div>
