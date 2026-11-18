@@ -184,7 +184,7 @@ export default function PigaehaenggaePage() {
                 </ul>
               </div>
               <div className="pt-2">
-                <PaymentButton planName="피개행개 베이직 1개월 이용권" amount={14900} variant="secondary" />
+                <PaymentButton planId="basic-monthly" planName="피개행개 베이직 1개월 이용권" amount={14900} variant="secondary" />
               </div>
             </div>
 
@@ -235,7 +235,7 @@ export default function PigaehaenggaePage() {
                 </ul>
               </div>
               <div className="pt-2">
-                <PaymentButton planName="피개행개 프리미엄 1년 이용권" amount={49000} variant="primary" />
+                <PaymentButton planId="premium-yearly" planName="피개행개 프리미엄 1년 이용권" amount={49000} variant="primary" />
               </div>
             </div>
           </div>

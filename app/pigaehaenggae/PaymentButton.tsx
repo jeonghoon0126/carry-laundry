@@ -2,13 +2,21 @@
 
 import { useState } from 'react'
 import Script from 'next/script'
-import { CreditCard, Loader2 } from 'lucide-react'
+import { CreditCard, Loader2, ShieldCheck, AlertTriangle } from 'lucide-react'
 
 interface PaymentButtonProps {
+  /** 서버 카탈로그(lib/pigaehaenggae/plans.ts)의 상품 ID */
+  planId: string
   planName: string
   amount: number
   variant?: 'primary' | 'secondary'
 }
+
+type VerifyState =
+  | { kind: 'idle' }
+  | { kind: 'verifying' }
+  | { kind: 'verified'; paymentId: string }
+  | { kind: 'unverified'; paymentId: string; message: string }
 
 declare global {
   interface Window {
@@ -18,8 +26,51 @@ declare global {
   }
 }
 
-export default function PaymentButton({ planName, amount, variant = 'primary' }: PaymentButtonProps) {
+export default function PaymentButton({ planId, planName, amount, variant = 'primary' }: PaymentButtonProps) {
   const [loading, setLoading] = useState(false)
+  const [verify, setVerify] = useState<VerifyState>({ kind: 'idle' })
+
+  /** 결제창 종료 후 서버에 결제 건을 검증 요청한다. 실패해도 결제 자체를 재시도시키지 않는다. */
+  const verifyPayment = async (paymentId: string) => {
+    setVerify({ kind: 'verifying' })
+    try {
+      const res = await fetch('/api/pigaehaenggae/verify-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentId, planId }),
+      })
+      const data = await res.json().catch(() => null)
+
+      if (res.ok && data?.ok === true) {
+        setVerify({ kind: 'verified', paymentId })
+        alert(
+          '결제가 정상적으로 확인되었습니다. 피개행개 서비스를 이용해 주셔서 감사합니다!\n' +
+            `결제번호: ${paymentId}`,
+        )
+        return
+      }
+
+      const message =
+        typeof data?.message === 'string' && data.message
+          ? data.message
+          : '결제 확인이 아직 끝나지 않았습니다.'
+      setVerify({ kind: 'unverified', paymentId, message })
+      alert(
+        `결제창은 완료되었지만 서버 확인이 끝나지 않았습니다.\n${message}\n` +
+          `아래 결제번호를 고객센터(010-9432-0293)로 알려주시면 바로 확인해 드리겠습니다.\n결제번호: ${paymentId}`,
+      )
+    } catch {
+      setVerify({
+        kind: 'unverified',
+        paymentId,
+        message: '네트워크 문제로 결제 확인 요청을 보내지 못했습니다.',
+      })
+      alert(
+        '결제창은 완료되었지만 서버 확인 요청이 전달되지 않았습니다.\n' +
+          `아래 결제번호를 고객센터(010-9432-0293)로 알려주시면 바로 확인해 드리겠습니다.\n결제번호: ${paymentId}`,
+      )
+    }
+  }
 
   const handlePayment = async () => {
     if (typeof window === 'undefined') return
@@ -29,6 +80,7 @@ export default function PaymentButton({ planName, amount, variant = 'primary' }:
     }
 
     setLoading(true)
+    setVerify({ kind: 'idle' })
     try {
       const paymentId = `pghg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
       const response = await window.PortOne.requestPayment({
@@ -42,12 +94,15 @@ export default function PaymentButton({ planName, amount, variant = 'primary' }:
       })
 
       if (response?.code != null) {
+        // 사용자가 결제창을 닫은 경우(취소)에는 안내창을 띄우지 않는다.
         if (response.code !== 'FAILURE_TYPE_PG' || !response.message?.includes('취소')) {
           alert(`결제 안내: ${response.message || '결제가 완료되지 않았습니다.'}`)
         }
-      } else {
-        alert('결제가 정상적으로 완료되었습니다. 피개행개 서비스를 이용해 주셔서 감사합니다!')
+        return
       }
+
+      // 결제창이 성공으로 끝났더라도 금액·상태는 서버에서 다시 확인한다.
+      await verifyPayment(paymentId)
     } catch (err: any) {
       console.error('Payment request error:', err)
       alert(`결제 요청 중 오류가 발생했습니다: ${err?.message || err}`)
@@ -62,17 +117,35 @@ export default function PaymentButton({ planName, amount, variant = 'primary' }:
     : "bg-slate-900 text-white hover:bg-slate-800"
 
   return (
-    <>
+    <div className="space-y-2">
       <Script src="https://cdn.portone.io/v2/browser-sdk.js" strategy="lazyOnload" />
       <button
         type="button"
         onClick={handlePayment}
-        disabled={loading}
+        disabled={loading || verify.kind === 'verifying'}
         className={`${baseStyle} ${variantStyle} disabled:opacity-50`}
       >
-        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
-        {planName} 결제하기 (신용카드)
+        {loading || verify.kind === 'verifying'
+          ? <Loader2 className="w-4 h-4 animate-spin" />
+          : <CreditCard className="w-4 h-4" />}
+        {verify.kind === 'verifying' ? '결제 확인 중…' : `${planName} 결제하기 (신용카드)`}
       </button>
-    </>
+
+      {verify.kind === 'verified' && (
+        <p className="flex items-start gap-1.5 text-[11px] leading-relaxed text-emerald-700">
+          <ShieldCheck className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+          <span>결제가 확인되었습니다. 결제번호 {verify.paymentId}</span>
+        </p>
+      )}
+
+      {verify.kind === 'unverified' && (
+        <p className="flex items-start gap-1.5 text-[11px] leading-relaxed text-amber-700">
+          <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+          <span>
+            {verify.message} 결제번호 {verify.paymentId} 를 고객센터(010-9432-0293)로 알려주세요.
+          </span>
+        </p>
+      )}
+    </div>
   )
 }
