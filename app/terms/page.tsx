@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ShieldCheck, ArrowLeft, Building, Mail, Phone } from 'lucide-react'
+import { PLAN_BENEFITS } from '@/lib/pigaehaenggae/plan-benefits'
 
 export const metadata: Metadata = {
   title: '이용약관 및 환불정책 | 피개행개 - 캐리 (Carrie)',
@@ -20,7 +21,7 @@ export default function TermsPage() {
               서비스 이용약관 및 환불정책
             </h1>
             <p className="text-xs text-slate-500">
-              최종 개정일: 2026년 11월 7일 | 시행일: 2026년 11월 7일
+              최종 개정일: 2026년 11월 19일 | 시행일: 2026년 11월 19일
             </p>
           </div>
           <Link
@@ -37,7 +38,7 @@ export default function TermsPage() {
           <section className="space-y-2">
             <h2 className="text-base font-bold text-slate-900">제1조 (목적)</h2>
             <p>
-              본 약관은 <strong>캐리(Carrie)</strong>(이하 &apos;회사&apos;)가 제공하는 반려동물 AI 산책 코스 생성 및 동반 장소 큐레이션 서비스인 <strong>&apos;피개행개&apos;</strong>(이하 &apos;서비스&apos;)의 이용과 관련하여 회사와 이용자 간의 권리, 의무 및 책임사항, 요금 결제 및 환불 등에 관한 제반 사항을 규정함을 목적으로 합니다.
+              본 약관은 <strong>캐리(Carrie)</strong>(이하 &apos;회사&apos;)가 제공하는 반려견 동반 장소 탐색과 산책 기록 앱 서비스인 <strong>&apos;피개행개&apos;</strong>(이하 &apos;서비스&apos;) 및 유료 이용권의 이용과 관련하여 회사와 이용자 간의 권리, 의무 및 책임사항, 요금 결제 및 환불 등에 관한 제반 사항을 규정함을 목적으로 합니다.
             </p>
           </section>
 
@@ -59,18 +60,19 @@ export default function TermsPage() {
           <section className="space-y-2">
             <h2 className="text-base font-bold text-slate-900">제3조 (서비스 상품의 내용 및 이용 요금)</h2>
             <p>
-              회사가 제공하는 유료 디지털 소프트웨어 라이선스 상품 및 이용 요금은 다음과 같습니다 (부가가치세 포함 금액).
+              회사가 제공하는 유료 이용권 상품 및 이용 요금은 다음과 같습니다 (부가가치세 포함 금액).
+              이용권에 포함된 세탁 할인권은 회사가 운영하는 침구 세탁 서비스 주문 시 사용할 수 있습니다.
             </p>
             <div className="grid sm:grid-cols-2 gap-3 pt-2">
               <div className="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 space-y-1">
                 <div className="font-bold text-slate-900 text-sm">피개행개 베이직 이용권 (1개월)</div>
                 <div className="text-base font-extrabold text-emerald-600">14,900원 (일시불)</div>
-                <div className="text-xs text-slate-500">전국 4,600+ 플레이스 무제한 조회, AI 산책 코스 일 5회 생성, 실시간 기상 연동</div>
+                <div className="text-xs text-slate-500">{PLAN_BENEFITS['basic-monthly'].items.join(' · ')}</div>
               </div>
               <div className="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 space-y-1">
                 <div className="font-bold text-slate-900 text-sm">피개행개 프리미엄 패스 (1년)</div>
                 <div className="text-base font-extrabold text-emerald-600">49,000원 (일시불)</div>
-                <div className="text-xs text-slate-500">베이직 전체 기능 + AI 산책 코스 무제한, 천연잔디 오프리시 비밀 스팟, 1:1 활동량 리포트</div>
+                <div className="text-xs text-slate-500">{PLAN_BENEFITS['premium-yearly'].items.join(' · ')}</div>
               </div>
             </div>
             <p className="text-xs text-slate-500 pt-1">
@@ -81,8 +83,8 @@ export default function TermsPage() {
           <section className="space-y-2">
             <h2 className="text-base font-bold text-slate-900">제4조 (결제 방법 및 구매 안전)</h2>
             <p>
-              1. 이용자는 신용·체크카드, 계좌이체, 토스페이·네이버페이·카카오페이 등 회사가 제공하는 전자결제 수단을 통해 이용 요금을 결제할 수 있습니다.<br />
-              2. 모든 전자금융 결제는 (주)코리아포트원 및 토스페이먼츠(주)의 전자결제 대행 시스템과 에스크로(구매안전서비스) 시스템을 통해 안전하게 처리됩니다.
+              1. 이용자는 신용·체크카드를 통해 이용 요금을 결제할 수 있습니다.<br />
+              2. 모든 카드 결제는 (주)코리아포트원을 거쳐 토스페이먼츠(주)의 전자결제 대행 시스템으로 처리됩니다.
             </p>
           </section>
 
@@ -94,10 +96,10 @@ export default function TermsPage() {
               </p>
               <ol className="list-decimal pl-4 space-y-1">
                 <li>
-                  <strong>전액 환불 (7일 이내 미이용):</strong> 결제일로부터 7일 이내에 유료 AI 기능이나 유료 콘텐츠를 전혀 이용하지 않은 경우, 전액 환불(청약철회)이 가능합니다.
+                  <strong>전액 환불 (7일 이내 미이용):</strong> 결제일로부터 7일 이내에 이용권에 포함된 유료 혜택(세탁 할인권·무료 쿠폰)을 한 번도 사용하지 않은 경우, 전액 환불(청약철회)이 가능합니다.
                 </li>
                 <li>
-                  <strong>중도 해지 및 부분 환불:</strong> 결제일로부터 7일이 경과하였거나 유료 기능을 이미 이용한 경우, 이용 일수 또는 사용한 AI 토큰에 비례한 금액과 결제 수수료(10%)를 차감한 잔액이 환불됩니다.
+                  <strong>중도 해지 및 부분 환불:</strong> 결제일로부터 7일이 경과하였거나 유료 혜택을 이미 사용한 경우, 이용 일수 또는 사용한 혜택(사용한 할인권 수 등)에 비례한 금액과 결제 수수료(10%)를 차감한 잔액이 환불됩니다.
                 </li>
                 <li>
                   <strong>서비스 하자 및 중단:</strong> 회사의 귀책사유로 인하여 서비스가 24시간 이상 연속 중단되거나 정상 이용이 불가한 경우 전액 환불 또는 이용 기간 연장 조치를 취합니다.

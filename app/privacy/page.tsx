@@ -43,8 +43,8 @@ export default function PrivacyPage() {
             <p>회사는 다음의 목적을 위하여 필요한 최소한의 개인정보를 수집·처리합니다.</p>
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs space-y-2">
               <div><strong>① 서비스 회원가입 및 본인 확인:</strong> 성명, 휴대전화번호, 이메일 주소, 로그인 식별자</div>
-              <div><strong>② 요금 결제 및 정산:</strong> 신용카드 정보(카드사명, 일부 마스킹 카드번호), 결제 승인번호, 은행계좌 정보 (결제 대행사를 통한 암호화 처리)</div>
-              <div><strong>③ AI 맞춤 산책 코스 및 서비스 제공:</strong> 반려동물 정보(견종, 체중, 연령, 활동 성향), 위치 정보(GPS 기반 인근 장소 탐색 시)</div>
+              <div><strong>② 요금 결제 및 정산:</strong> 신용카드 정보(카드사명, 일부 마스킹 카드번호), 결제 승인번호 (결제 대행사를 통한 암호화 처리)</div>
+              <div><strong>③ 서비스 제공:</strong> 반려동물 정보(견종, 체중), 위치 정보(GPS 기반 인근 장소 탐색 시), 이용권 혜택(세탁 할인권) 발급·사용 확인 기록</div>
               <div><strong>④ 고객 상담 및 불만 처리:</strong> 상담 내역, 연락처, 기기 식별값</div>
             </div>
           </section>
@@ -68,7 +68,7 @@ export default function PrivacyPage() {
             </p>
             <div className="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 text-xs space-y-1">
               <div><strong>수탁업체:</strong> (주)코리아포트원, 토스페이먼츠(주)</div>
-              <div><strong>위탁업무 내용:</strong> 전자결제 연동 API 및 신용카드, 계좌이체, 간편결제 등 전자결제 대행 및 에스크로(구매안전) 서비스 제공</div>
+              <div><strong>위탁업무 내용:</strong> 전자결제 연동 API 및 신용·체크카드 결제 대행</div>
               <div><strong>보유 및 이용기간:</strong> 회원 탈퇴 시 또는 결제 대행 위탁 계약 종료 시까지 (관계 법령 준수)</div>
             </div>
           </section>
