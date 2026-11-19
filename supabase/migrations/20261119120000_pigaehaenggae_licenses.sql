@@ -1,88 +1,69 @@
--- 피개행개 이용권(유료 결제) 기록 표 — 제안 스키마
---
--- ⚠️ 이 파일은 "생성만" 한 제안 스키마다. 운영 DB에는 아직 적용하지 않았다.
---    정훈님 승인 후 Supabase SQL Editor 또는 `supabase db push` 로 적용한다.
---
--- 적용 대상: carry-laundry 가 쓰는 Supabase 프로젝트
--- 목적:
---   1) 포트원 결제 검증(POST /api/pigaehaenggae/verify-payment)이 성공한 결제를 기록
---   2) 같은 payment_id 가 두 번 적재되지 않게 해 중복 지급 방지
---   3) 이용권에 포함된 혜택(캐리 침구 세탁 할인권)의 발급·사용 여부 기록
---      → "7일 이내 미사용 전액 환불" 판단 근거
---
--- 주의: service_role 키로만 쓰기. 브라우저(anon)에서 직접 쓰지 않는다.
+-- 피개행개 이용권 기록 표. 2026-11-19 운영(carry Supabase xlbckmqdzzkwtboscjgr) SQL Editor로 적용 완료(정훈님 승인).
+-- 적용 뒤 확인: 두 표 RLS 켜짐, anon/authenticated 권한 없음, service_role만 읽기 쓰기, 시험 행 되돌림 뒤 0건.
+-- 이전 초안(user_id, customer_email, customer_phone, raw)은 개인정보를 줄이려고 앱 고객 번호(app_customer_id)로 바꿨다.
+-- 혜택별 할인권 발급과 사용 기록은 다음 마이그레이션(20261119130000)에 있다.
 
--- 1) 이용권(결제) 기록
-CREATE TABLE IF NOT EXISTS public.pigaehaenggae_licenses (
-  id BIGSERIAL PRIMARY KEY,
-  payment_id TEXT NOT NULL UNIQUE,                 -- 포트원 paymentId (pghg_...) 중복 방지
-  transaction_id TEXT,                             -- 포트원 transactionId
-  plan_id TEXT NOT NULL,                           -- 'basic-monthly' | 'premium-yearly'
-  amount INTEGER NOT NULL,                         -- 실제 결제 금액(원)
-  currency TEXT NOT NULL DEFAULT 'KRW',
-  status TEXT NOT NULL DEFAULT 'active',           -- active | refunded | expired
-  user_id TEXT,                                    -- 로그인 사용자 ID(비회원이면 NULL)
-  customer_email TEXT,
-  customer_phone TEXT,
-  paid_at TIMESTAMPTZ NOT NULL,
-  expires_at TIMESTAMPTZ,                          -- paid_at + 1개월 / 1년
-  receipt_url TEXT,
-  raw JSONB,                                       -- 포트원 응답 원문(감사용)
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+begin;
+
+create table if not exists public.pigaehaenggae_license_benefits (
+  id bigint generated always as identity primary key,
+  plan_id text not null check (plan_id in ('basic-monthly', 'premium-yearly')),
+  benefit_code text not null check (benefit_code ~ '^[a-z0-9_]{3,40}$'),
+  label text not null check (char_length(label) between 1 and 80),
+  amount_off integer check (amount_off is null or amount_off > 0),
+  percent_off integer check (percent_off is null or percent_off between 1 and 100),
+  uses_per_period integer check (uses_per_period is null or uses_per_period > 0),
+  active boolean not null default true,
+  created_at timestamptz not null default now(),
+  unique (plan_id, benefit_code),
+  check (amount_off is null or percent_off is null)
 );
 
-CREATE INDEX IF NOT EXISTS idx_pgl_user ON public.pigaehaenggae_licenses(user_id);
-CREATE INDEX IF NOT EXISTS idx_pgl_paid_at ON public.pigaehaenggae_licenses(paid_at DESC);
-CREATE INDEX IF NOT EXISTS idx_pgl_status ON public.pigaehaenggae_licenses(status);
-
-ALTER TABLE public.pigaehaenggae_licenses ENABLE ROW LEVEL SECURITY;
-
--- 서버(service_role)는 RLS 를 우회하므로 별도 정책이 필요 없다.
--- 로그인 사용자가 자기 이용권만 읽을 수 있게 할 때만 아래 정책을 켠다.
--- CREATE POLICY "own licenses" ON public.pigaehaenggae_licenses
---   FOR SELECT TO authenticated USING (auth.uid()::text = user_id);
-
--- 2) 이용권 혜택(세탁 할인권·무료 쿠폰) 발급/사용 기록
---    환불 판정과 실제 사용 확인에 쓰인다. 혜택 내용을 바꾸면 benefit_type 값만 늘리면 된다.
-CREATE TABLE IF NOT EXISTS public.pigaehaenggae_license_benefits (
-  id BIGSERIAL PRIMARY KEY,
-  license_id BIGINT NOT NULL REFERENCES public.pigaehaenggae_licenses(id) ON DELETE CASCADE,
-  benefit_type TEXT NOT NULL,                      -- 'laundry_discount_20' | 'laundry_free_once'
-  coupon_code TEXT NOT NULL UNIQUE,                -- 사용자에게 보여줄 할인권 번호
-  discount_rate INTEGER,                           -- % (무료 쿠폰이면 NULL)
-  used_at TIMESTAMPTZ,                             -- 사용 시각 (NULL 이면 미사용)
-  used_order_ref TEXT,                             -- 캐리 세탁 주문번호 등
-  expires_at TIMESTAMPTZ,                          -- 이용권 만료일과 동일
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+create table if not exists public.pigaehaenggae_licenses (
+  id bigint generated always as identity primary key,
+  payment_id text not null unique check (payment_id ~ '^pghg_[A-Za-z0-9_-]{4,80}$'),
+  transaction_id text,
+  plan_id text not null check (plan_id in ('basic-monthly', 'premium-yearly')),
+  amount integer not null check (amount > 0),
+  currency text not null default 'KRW' check (currency = 'KRW'),
+  status text not null default 'active' check (status in ('active', 'refunded', 'cancelled')),
+  app_customer_id text check (app_customer_id is null or app_customer_id ~ '^[A-Za-z0-9_-]{16,128}$'),
+  paid_at timestamptz not null,
+  starts_at timestamptz not null,
+  expires_at timestamptz not null,
+  refunded_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  check (expires_at > starts_at),
+  check ((status = 'refunded') = (refunded_at is not null)),
+  check (refunded_at is null or refunded_at >= paid_at)
 );
 
-CREATE INDEX IF NOT EXISTS idx_pglb_license ON public.pigaehaenggae_license_benefits(license_id);
-CREATE INDEX IF NOT EXISTS idx_pglb_used ON public.pigaehaenggae_license_benefits(used_at);
+-- 같은 PortOne 결제가 다른 payment_id로 두 번 들어와도 이용권은 하나.
+create unique index if not exists pigaehaenggae_licenses_transaction_uq
+  on public.pigaehaenggae_licenses (transaction_id) where transaction_id is not null;
 
-ALTER TABLE public.pigaehaenggae_license_benefits ENABLE ROW LEVEL SECURITY;
+create index if not exists pigaehaenggae_licenses_customer_idx
+  on public.pigaehaenggae_licenses (app_customer_id, expires_at desc)
+  where app_customer_id is not null;
 
--- 3) 환불 처리 시 참고용 뷰 (사용한 혜택 수)
---    security_invoker = true 로 두어야 조회자 권한(RLS)이 그대로 적용된다.
---    (기본값은 뷰 소유자 권한으로 실행되어 anon 에게 노출될 수 있음)
-CREATE OR REPLACE VIEW public.pigaehaenggae_license_usage
-WITH (security_invoker = true) AS
-SELECT
-  l.id AS license_id,
-  l.payment_id,
-  l.plan_id,
-  l.paid_at,
-  l.expires_at,
-  COUNT(b.id) AS benefit_count,
-  COUNT(b.used_at) AS used_benefit_count,
-  MAX(b.used_at) AS last_used_at
-FROM public.pigaehaenggae_licenses l
-LEFT JOIN public.pigaehaenggae_license_benefits b ON b.license_id = l.id
-GROUP BY l.id, l.payment_id, l.plan_id, l.paid_at, l.expires_at;
+create or replace function public.pigaehaenggae_licenses_touch() returns trigger
+  language plpgsql security invoker set search_path = '' as $$
+begin
+  new.updated_at := now();
+  return new;
+end $$;
+revoke all on function public.pigaehaenggae_licenses_touch() from public, anon, authenticated;
 
--- 브라우저(anon/authenticated)에서는 이 뷰를 직접 못 읽게 막아 둔다. 운영은 service_role 로만 조회.
-REVOKE ALL ON public.pigaehaenggae_license_usage FROM anon, authenticated;
+create trigger pigaehaenggae_licenses_touch before update on public.pigaehaenggae_licenses
+  for each row execute function public.pigaehaenggae_licenses_touch();
 
--- 적용 후 확인:
---   SELECT count(*) FROM public.pigaehaenggae_licenses;
---   SELECT * FROM public.pigaehaenggae_license_usage LIMIT 5;
+-- 공개 키(anon)와 로그인 사용자(authenticated)는 표와 번호 생성기 모두 못 쓴다. 서버 키(service_role)만 쓴다.
+alter table public.pigaehaenggae_license_benefits enable row level security;
+alter table public.pigaehaenggae_licenses enable row level security;
+revoke all on public.pigaehaenggae_license_benefits, public.pigaehaenggae_licenses from public, anon, authenticated;
+revoke all on sequence public.pigaehaenggae_license_benefits_id_seq, public.pigaehaenggae_licenses_id_seq from public, anon, authenticated;
+grant select, insert, update on public.pigaehaenggae_license_benefits, public.pigaehaenggae_licenses to service_role;
+grant usage, select on sequence public.pigaehaenggae_license_benefits_id_seq, public.pigaehaenggae_licenses_id_seq to service_role;
+
+commit;

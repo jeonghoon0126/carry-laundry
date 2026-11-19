@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/lib/logger'
 import { PIGAEHAENGGAE_STORE_ID, findPlan } from '@/lib/pigaehaenggae/plans'
+import { getSupabaseServer } from '@/lib/supabase-server'
+import { verifyLinkToken } from '@/lib/pigaehaenggae/link-token'
+import { recordLicense } from '@/lib/pigaehaenggae/licenses'
+import type { PlanId } from '@/lib/pigaehaenggae/plan-benefits'
 
 /**
  * 포트원(PortOne) V2 결제 단건 검증 API
  *
  * POST /api/pigaehaenggae/verify-payment
- *   body: { paymentId: string, planId: string }
+ *   body: { paymentId: string, planId: string, link?: string }
+ *   link: 피개행개 앱이 발급한 연결 표(lib/pigaehaenggae/link-token.ts). 있으면 이용권을 그 앱 고객에게 묶는다.
  *
  * 브라우저 결제창이 끝났다는 사실만으로는 결제가 성사됐다고 볼 수 없으므로,
  * 서버가 포트원 REST API(GET /payments/{paymentId})로 실제 결제 상태·금액·상점을
@@ -63,7 +68,7 @@ export async function POST(request: NextRequest) {
     return jsonError(400, 'invalid_json', '요청 본문을 읽을 수 없습니다.')
   }
 
-  const { paymentId, planId } = (body ?? {}) as { paymentId?: unknown; planId?: unknown }
+  const { paymentId, planId, link } = (body ?? {}) as { paymentId?: unknown; planId?: unknown; link?: unknown }
 
   if (typeof paymentId !== 'string' || !PAYMENT_ID_PATTERN.test(paymentId)) {
     return jsonError(400, 'invalid_payment_id', '결제 ID가 올바르지 않습니다.')
@@ -229,13 +234,49 @@ export async function POST(request: NextRequest) {
     paidAt: payment.paidAt,
   })
 
-  // 주의: 유료 플랜(이용권) 적재 테이블은 아직 DB에 없다.
-  // 이 엔드포인트는 "결제가 진짜 성사됐는가"만 확정하고, 이용권 부여는 스키마 확정 후 붙인다.
-  // (docs/pigaehaenggae-payment-verification.md 참고)
+  // 이용권 기록. 결제는 이미 확정됐으므로 기록이 실패해도 결제 성공 응답은 그대로 주고
+  // entitlementRecorded=false 로 알린다(포트원 웹훅이나 같은 요청 재시도로 다시 기록된다).
+  let linkStatus: 'none' | 'linked' | 'rejected' = 'none'
+  let customerId: string | null = null
+  if (link !== undefined && link !== null && link !== '') {
+    const checked = verifyLinkToken(link, paymentId, Date.parse(payment.paidAt))
+    if (checked.ok) {
+      customerId = checked.payload.cid
+      linkStatus = 'linked'
+    } else {
+      linkStatus = 'rejected'
+      logger.warn('pigaehaenggae link token rejected', { paymentId, reason: checked.reason })
+    }
+  }
+
+  let entitlementRecorded = false
+  let customerLinked = false
+  let expiresAt: string | null = null
+  try {
+    const recorded = await recordLicense(getSupabaseServer(), {
+      paymentId,
+      transactionId: payment.transactionId ?? null,
+      planId: plan.id as PlanId,
+      amount: paidAmount,
+      paidAt: payment.paidAt,
+      customerId,
+    })
+    if (recorded.ok) {
+      entitlementRecorded = true
+      customerLinked = recorded.customerLinked
+      expiresAt = recorded.expiresAt
+    }
+  } catch (error) {
+    logger.apiError('/api/pigaehaenggae/verify-payment', error, { paymentId, step: 'record_license' })
+  }
+
   return NextResponse.json({
     ok: true,
     verified: true,
-    entitlementRecorded: false,
+    entitlementRecorded,
+    customerLinked,
+    linkStatus,
+    licenseExpiresAt: expiresAt,
     payment: {
       paymentId,
       status: payment.status,

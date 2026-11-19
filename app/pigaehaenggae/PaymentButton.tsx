@@ -26,25 +26,48 @@ declare global {
   }
 }
 
+/**
+ * 피개행개 앱에서 넘어온 연결 표(?link=...)에서 미리 만든 결제 ID를 읽는다.
+ * 서명 확인은 서버(verify-payment)가 한다. 여기서는 형식만 보고, 이상하면 연결 없이 결제한다.
+ */
+function readAppLink(): { link: string; paymentId: string } | null {
+  try {
+    const link = new URLSearchParams(window.location.search).get('link')
+    if (!link || link.length > 1024) return null
+    const body = link.split('.')[0]
+    const json = atob(body.replace(/-/g, '+').replace(/_/g, '/'))
+    const pid = JSON.parse(json)?.pid
+    if (typeof pid !== 'string' || !/^pghg_[A-Za-z0-9_-]{4,80}$/.test(pid)) return null
+    return { link, paymentId: pid }
+  } catch {
+    return null
+  }
+}
+
+/** 연결 표의 결제 ID로 결제가 확인되면 그 뒤 결제는 새 결제 ID로, 앱 연결 없이 한다. 결제창을 닫은 경우엔 같은 ID로 다시 시도한다. */
+let appLinkUsed = false
+
 export default function PaymentButton({ planId, planName, amount, variant = 'primary' }: PaymentButtonProps) {
   const [loading, setLoading] = useState(false)
   const [verify, setVerify] = useState<VerifyState>({ kind: 'idle' })
 
   /** 결제창 종료 후 서버에 결제 건을 검증 요청한다. 실패해도 결제 자체를 재시도시키지 않는다. */
-  const verifyPayment = async (paymentId: string) => {
+  const verifyPayment = async (paymentId: string, link?: string) => {
     setVerify({ kind: 'verifying' })
     try {
       const res = await fetch('/api/pigaehaenggae/verify-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paymentId, planId }),
+        body: JSON.stringify(link ? { paymentId, planId, link } : { paymentId, planId }),
       })
       const data = await res.json().catch(() => null)
 
       if (res.ok && data?.ok === true) {
         setVerify({ kind: 'verified', paymentId })
+        if (link) appLinkUsed = true
         alert(
           '결제가 정상적으로 확인되었습니다. 피개행개 서비스를 이용해 주셔서 감사합니다!\n' +
+            (data?.customerLinked ? '피개행개 앱의 내 강아지 화면에서 할인권을 확인할 수 있어요.\n' : '') +
             `결제번호: ${paymentId}`,
         )
         return
@@ -82,7 +105,8 @@ export default function PaymentButton({ planId, planName, amount, variant = 'pri
     setLoading(true)
     setVerify({ kind: 'idle' })
     try {
-      const paymentId = `pghg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
+      const appLink = appLinkUsed ? null : readAppLink()
+      const paymentId = appLink?.paymentId ?? `pghg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
       const response = await window.PortOne.requestPayment({
         storeId: 'store-b5db7fb0-7efb-488a-9436-96e195c272e1',
         channelKey: 'channel-key-cfbbdc86-f786-4c1c-a0f7-42c5fd14ba67',
@@ -102,7 +126,7 @@ export default function PaymentButton({ planId, planName, amount, variant = 'pri
       }
 
       // 결제창이 성공으로 끝났더라도 금액·상태는 서버에서 다시 확인한다.
-      await verifyPayment(paymentId)
+      await verifyPayment(paymentId, appLink?.link)
     } catch (err: any) {
       console.error('Payment request error:', err)
       alert(`결제 요청 중 오류가 발생했습니다: ${err?.message || err}`)

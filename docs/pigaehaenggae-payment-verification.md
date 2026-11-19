@@ -118,3 +118,24 @@ ALTER TABLE public.pigaehaenggae_licenses ENABLE ROW LEVEL SECURITY;
 
 `app/api/payments/confirm/route.ts` 는 캐리 세탁 주문용 토스페이먼츠 승인 API입니다.
 피개행개 이용권은 포트원 V2 경유이므로 위 검증 API를 사용합니다. 두 흐름은 서로 건드리지 않습니다.
+
+## 이용권 기록, 조회, 환불 (2026-11-19 추가)
+
+| 경로 | 하는 일 |
+| --- | --- |
+| `POST /api/pigaehaenggae/verify-payment` | 검증 성공 뒤 `pigaehaenggae_licenses`에 이용권을 남기고 할인권을 발급. `link`(앱 연결 표)가 맞으면 앱 고객 번호를 묶는다. 응답 `entitlementRecorded`, `customerLinked`, `linkStatus`, `licenseExpiresAt` |
+| `POST /api/pigaehaenggae/license-status` | 피개행개 앱 서버 전용. 서명 헤더 `x-pghg-timestamp`, `x-pghg-signature`. 유효 이용권과 할인권 반환 |
+| `POST /api/pigaehaenggae/portone-webhook` | 포트원 웹훅. 결제 완료면 이용권 기록(브라우저가 닫혀도), 전액 취소면 `status=refunded`. 부분 취소는 로그만 |
+
+표: `supabase/migrations/20261119120000_pigaehaenggae_licenses.sql`(운영 적용 완료), `20261119130000_pigaehaenggae_license_coupons.sql`(할인권 표, 운영 적용 대기).
+할인권 사용 처리(`used_at`, `used_order_ref`)는 아직 세탁 주문 화면에 없어서 운영자가 Supabase에서 표시한다.
+
+필요한 환경변수(값은 사람이 Vercel에 등록, 채팅이나 코드에 남기지 않음)
+
+| 이름 | 용도 |
+| --- | --- |
+| `PORTONE_API_SECRET` | 포트원 결제 조회 |
+| `PORTONE_WEBHOOK_SECRET` | 포트원 콘솔 웹훅 시크릿(`whsec_...`). 웹훅 주소: `https://carry-laundry.vercel.app/api/pigaehaenggae/portone-webhook` |
+| `SUPABASE_SERVICE_ROLE` | 이용권 표 쓰기 |
+| `PIGAEHAENGGAE_LICENSE_LINK_SECRET` | 앱 연결 표 서명. 피개행개 앱 Vercel과 같은 값, 32자 이상 |
+| `PIGAEHAENGGAE_LICENSE_QUERY_SECRET` | 앱 서버의 이용권 조회 서명. 피개행개 앱 Vercel과 같은 값, 32자 이상 |
