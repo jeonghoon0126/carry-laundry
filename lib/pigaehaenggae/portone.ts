@@ -13,6 +13,7 @@ export interface PortOnePaymentSummary {
   currency?: string
   amount?: number | { total?: number; cancelled?: number }
   transactionId?: string
+  channel?: { type?: string }
 }
 
 export type FetchResult =

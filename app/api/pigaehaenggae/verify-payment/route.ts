@@ -46,6 +46,7 @@ interface PortOnePayment {
   receiptUrl?: string
   method?: { type?: string }
   transactionId?: string
+  channel?: { type?: string }
 }
 
 function jsonError(status: number, code: string, message: string, extra?: Record<string, unknown>) {
@@ -181,8 +182,18 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  // 2) 상점
-  if (payment.storeId && payment.storeId !== PIGAEHAENGGAE_STORE_ID) {
+  // 1-1) 실결제 채널. 상점 ID는 공개값이라, 시험 채널 결제(돈이 안 나감)로 이용권을 받지 못하게 막는다.
+  if (payment.channel?.type !== 'LIVE') {
+    logger.error('PortOne verification: non-live channel', {
+      endpoint: '/api/pigaehaenggae/verify-payment',
+      paymentId,
+      channelType: payment.channel?.type ?? 'missing',
+    })
+    return jsonError(409, 'test_channel', '실제 결제 건이 아닙니다.')
+  }
+
+  // 2) 상점 (값이 없어도 거부)
+  if (payment.storeId !== PIGAEHAENGGAE_STORE_ID) {
     logger.error('PortOne verification: store mismatch', {
       endpoint: '/api/pigaehaenggae/verify-payment',
       paymentId,
@@ -191,8 +202,8 @@ export async function POST(request: NextRequest) {
     return jsonError(409, 'store_mismatch', '다른 상점의 결제 건입니다.')
   }
 
-  // 3) 통화
-  if (payment.currency && payment.currency !== plan.currency) {
+  // 3) 통화 (값이 없어도 거부)
+  if (payment.currency !== plan.currency) {
     return jsonError(409, 'currency_mismatch', '통화 정보가 상품과 일치하지 않습니다.', {
       expectedCurrency: plan.currency,
       actualCurrency: payment.currency,

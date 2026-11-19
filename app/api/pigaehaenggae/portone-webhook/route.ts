@@ -63,14 +63,16 @@ export async function POST(request: NextRequest) {
     return done(fetched.reason === 'not_found' ? 'payment_not_found' : 'lookup_failed', fetched.reason === 'not_found' ? 200 : 503)
   }
   const payment = fetched.payment
-  if (payment.storeId && payment.storeId !== PIGAEHAENGGAE_STORE_ID) return done('ignored_other_store')
+  if (payment.storeId !== PIGAEHAENGGAE_STORE_ID) return done('ignored_other_store')
 
   const db = getSupabaseServer()
 
   if (payment.status === 'PAID') {
     const amount = totalAmount(payment)
     const plan = PIGAEHAENGGAE_PLANS.find((p) => p.amount === amount && (!payment.orderName || p.orderName === payment.orderName))
-    if (!plan || !payment.paidAt || (payment.currency && payment.currency !== plan.currency)) {
+    // 시험 채널 결제(돈이 안 나감)는 이용권으로 남기지 않는다.
+    if (payment.channel?.type !== 'LIVE') return done('ignored_test_channel')
+    if (!plan || !payment.paidAt || payment.currency !== plan.currency) {
       logger.error('pigaehaenggae webhook: paid payment does not match a plan', { paymentId, amount })
       return done('plan_mismatch')
     }

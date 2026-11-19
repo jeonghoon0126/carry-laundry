@@ -123,7 +123,7 @@ ALTER TABLE public.pigaehaenggae_licenses ENABLE ROW LEVEL SECURITY;
 
 | 경로 | 하는 일 |
 | --- | --- |
-| `POST /api/pigaehaenggae/verify-payment` | 검증 성공 뒤 `pigaehaenggae_licenses`에 이용권을 남기고 할인권을 발급. `link`(앱 연결 표)가 맞으면 앱 고객 번호를 묶는다. 응답 `entitlementRecorded`, `customerLinked`, `linkStatus`, `licenseExpiresAt` |
+| `POST /api/pigaehaenggae/verify-payment` | 검증 성공 뒤 `pigaehaenggae_licenses`에 이용권을 남기고 할인권을 발급. `link`(앱 연결 표, 주소 `#link=`로 받아 탭 저장소에 둠)가 맞으면 앱 고객 번호를 묶는다. 응답 `entitlementRecorded`, `customerLinked`, `linkStatus`, `licenseExpiresAt` |
 | `POST /api/pigaehaenggae/license-status` | 피개행개 앱 서버 전용. 서명 헤더 `x-pghg-timestamp`, `x-pghg-signature`. 유효 이용권과 할인권 반환 |
 | `POST /api/pigaehaenggae/portone-webhook` | 포트원 웹훅. 결제 완료면 이용권 기록(브라우저가 닫혀도), 전액 취소면 `status=refunded`. 부분 취소는 로그만 |
 

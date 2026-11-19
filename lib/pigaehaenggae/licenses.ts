@@ -146,8 +146,9 @@ export async function recordLicense(db: SupabaseClient, input: RecordInput): Pro
       .update({ app_customer_id: input.customerId })
       .eq('id', row.id)
       .is('app_customer_id', null)
+      .select('id')
     if (linked.error) logger.error('pigaehaenggae license link failed', { licenseId: row.id, code: linked.error.code })
-    else customerLinked = true
+    else customerLinked = (linked.data?.length ?? 0) > 0
   }
 
   let couponsIssued = false
