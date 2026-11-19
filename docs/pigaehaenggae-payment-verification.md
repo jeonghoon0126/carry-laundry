@@ -74,6 +74,9 @@ PORTONE_API_SECRET = (포트원 콘솔 > 결제연동 > API Keys > V2 API Secret
 (`entitlementRecorded: false`). 아래 스키마를 **정한 뒤에** 라우트에 적재를 붙입니다.
 아직 적용하지 않았습니다 — 임의로 테이블을 만들지 않았습니다.
 
+> 실행 가능한 SQL 파일은 `supabase/migrations/20261119120000_pigaehaenggae_licenses.sql` 에 있다
+> (이용권 표 + 혜택(할인권) 표 + 사용 현황 뷰 · 운영 DB에는 미적용).
+
 ```sql
 -- 제안 스키마 (미적용)
 CREATE TABLE IF NOT EXISTS public.pigaehaenggae_licenses (
