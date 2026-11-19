@@ -63,7 +63,10 @@ CREATE INDEX IF NOT EXISTS idx_pglb_used ON public.pigaehaenggae_license_benefit
 ALTER TABLE public.pigaehaenggae_license_benefits ENABLE ROW LEVEL SECURITY;
 
 -- 3) 환불 처리 시 참고용 뷰 (사용한 혜택 수)
-CREATE OR REPLACE VIEW public.pigaehaenggae_license_usage AS
+--    security_invoker = true 로 두어야 조회자 권한(RLS)이 그대로 적용된다.
+--    (기본값은 뷰 소유자 권한으로 실행되어 anon 에게 노출될 수 있음)
+CREATE OR REPLACE VIEW public.pigaehaenggae_license_usage
+WITH (security_invoker = true) AS
 SELECT
   l.id AS license_id,
   l.payment_id,
@@ -76,6 +79,9 @@ SELECT
 FROM public.pigaehaenggae_licenses l
 LEFT JOIN public.pigaehaenggae_license_benefits b ON b.license_id = l.id
 GROUP BY l.id, l.payment_id, l.plan_id, l.paid_at, l.expires_at;
+
+-- 브라우저(anon/authenticated)에서는 이 뷰를 직접 못 읽게 막아 둔다. 운영은 service_role 로만 조회.
+REVOKE ALL ON public.pigaehaenggae_license_usage FROM anon, authenticated;
 
 -- 적용 후 확인:
 --   SELECT count(*) FROM public.pigaehaenggae_licenses;
